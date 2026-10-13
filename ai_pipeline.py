@@ -967,10 +967,42 @@ def _join_or(items: list[str], word: str = "or") -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + f" {word} " + items[-1]
 
 
+_PILL_RE = re.compile(r"\b(tablet|capsule|pill|tab|cap|comprim[ée]|g[ée]lule)(s?)\b", re.IGNORECASE)
+
+
+def short_name(med: dict) -> str:
+    """The medicine's name without its strength: "Amoxicilline 1 g" -> "Amoxicilline",
+    "Clamoxyl sirop 250mg/5ml" -> "Clamoxyl sirop", "Vitamine D3 1000 UI" -> "Vitamine D3"."""
+    words = []
+    for word in med["name_as_written"].split():
+        if re.match(r"\d", word):
+            break
+        words.append(word)
+    name = " ".join(words) or med["name_as_written"]
+    return name[:1].upper() + name[1:]
+
+
+def _pills(text: str) -> str:
+    """Tablets and capsules are simply "pills" for the patient."""
+    return _PILL_RE.sub(lambda m: "pill" + ("s" if m.group(2) or m.group(1).lower().endswith("s") else ""), text)
+
+
+def _dose_with_name(amount: str, name: str) -> str:
+    """"1 tablet" -> "1 Amoxicilline pill"; "2 puffs" -> "2 puffs of Ventoline"; "5 ml" -> "5 ml of Clamoxyl sirop"."""
+    m = re.match(r"^\s*(\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|½|half|one|two)\s+(.+)$", amount, re.IGNORECASE)
+    if not m:
+        return f"{amount} of {name}"
+    number, unit = m.group(1), m.group(2).strip()
+    if _PILL_RE.fullmatch(unit) or _PILL_RE.match(unit):
+        plural = number not in ("1", "one") and "/" not in number and number not in ("½", "half")
+        return f"{number} {name} pill{'s' if plural else ''}"
+    return f"{number} {unit} of {name}"
+
+
 def _how_sentences(med: dict) -> list[str]:
     """How to take it, as short sentences: how much, when, food, how long, limits."""
     amount = med.get("amount_per_dose")
-    first = f"Take {amount}" if amount else "Take it"
+    first = f"Take {_dose_with_name(amount, short_name(med))}" if amount else "Take it"
 
     if med["only_when_needed"]:
         need = med.get("needed_for")
@@ -1004,14 +1036,14 @@ def _how_sentences(med: dict) -> list[str]:
     if med.get("every_hours"):
         sentences.append(f"Wait at least {med['every_hours']} hours before you take another one.")
     if med.get("max_per_day"):
-        sentences.append(f"Do not take more than {med['max_per_day']} in one day.")
+        sentences.append(f"Do not take more than {_pills(med['max_per_day'])} in one day.")
     if long_term:
         sentences.append("This is a long-term treatment.")
     return sentences
 
 
 def _purpose_sentences(med: dict) -> list[str]:
-    return [_sentence(f"This medicine is {_lower_first(med['purpose'])}")] if med.get("purpose") else []
+    return [_sentence(f"{short_name(med)} is {_lower_first(med['purpose'])}")] if med.get("purpose") else []
 
 
 def _sorry_sentences(med: dict) -> list[str]:
@@ -1050,7 +1082,7 @@ def _daily_schedule(medicines: list[dict]) -> list[str]:
     for med in medicines:
         label = med["name_as_written"]
         if med.get("amount_per_dose"):
-            label += f" ({med['amount_per_dose']})"
+            label += f" ({_pills(med['amount_per_dose'])})"
         if med["only_when_needed"]:
             as_needed.append(label)
         else:
@@ -1123,7 +1155,7 @@ def render_review(extraction: dict) -> list[str]:
     for i in notes:
         out.append(f"   CORRECTED  {i['source']}: {i['what']} ({_lower_first(i['why'])}).")
     if any(m.get("purpose") for m in extraction["medicines"]):
-        out.append('   AI-ADDED   The lines "This medicine is ..." are not on the prescription: please check them.')
+        out.append('   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them.')
     return out
 
 

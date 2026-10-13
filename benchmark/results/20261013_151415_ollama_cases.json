@@ -1,0 +1,3379 @@
+{
+ "meta": {
+  "started": "2026-10-13T15:14:15",
+  "duration_s": 159.7,
+  "provider": "ollama",
+  "model": "hf.co/NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M",
+  "cold_cache": false,
+  "cases_file": "cases.jsonl"
+ },
+ "summary": {
+  "cases": 25,
+  "cases_fully_correct": 25,
+  "checks": {
+   "passed": 224,
+   "total": 224,
+   "rate": 1.0
+  },
+  "by_group": {
+   "medicines": {
+    "passed": 51,
+    "total": 51,
+    "rate": 1.0
+   },
+   "fields": {
+    "passed": 90,
+    "total": 90,
+    "rate": 1.0
+   },
+   "review": {
+    "passed": 18,
+    "total": 18,
+    "rate": 1.0
+   },
+   "safety": {
+    "passed": 23,
+    "total": 23,
+    "rate": 1.0
+   },
+   "wording": {
+    "passed": 7,
+    "total": 7,
+    "rate": 1.0
+   },
+   "illness": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+   },
+   "privacy": {
+    "passed": 27,
+    "total": 27,
+    "rate": 1.0
+   },
+   "refusal": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   }
+  },
+  "by_field": {
+   "amount": {
+    "passed": 24,
+    "total": 24,
+    "rate": 1.0
+   },
+   "times_per_day": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+   },
+   "times_of_day": {
+    "passed": 13,
+    "total": 13,
+    "rate": 1.0
+   },
+   "food": {
+    "passed": 12,
+    "total": 12,
+    "rate": 1.0
+   },
+   "duration": {
+    "passed": 15,
+    "total": 15,
+    "rate": 1.0
+   },
+   "prn": {
+    "passed": 11,
+    "total": 11,
+    "rate": 1.0
+   },
+   "max_per_day": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+   },
+   "every_hours": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+   }
+  },
+  "by_category": {
+   "simple": {
+    "passed": 5,
+    "total": 5
+   },
+   "when needed": {
+    "passed": 2,
+    "total": 2
+   },
+   "chronic": {
+    "passed": 2,
+    "total": 2
+   },
+   "illness + several medicines": {
+    "passed": 2,
+    "total": 2
+   },
+   "illness only": {
+    "passed": 1,
+    "total": 1
+   },
+   "uncertain": {
+    "passed": 2,
+    "total": 2
+   },
+   "privacy": {
+    "passed": 2,
+    "total": 2
+   },
+   "English / Latin abbreviations": {
+    "passed": 2,
+    "total": 2
+   },
+   "voice transcript": {
+    "passed": 1,
+    "total": 1
+   },
+   "high risk": {
+    "passed": 4,
+    "total": 4
+   },
+   "not a prescription": {
+    "passed": 2,
+    "total": 2
+   }
+  },
+  "privacy_leaks": 0,
+  "unsupported_numbers": 0,
+  "review_flag": {
+   "missed": 0,
+   "needless": 0
+  },
+  "time_to_dosing_s": {
+   "mean": 6.6,
+   "median": 4.41,
+   "p95": 12.89,
+   "max": 18.73
+  },
+  "time_total_s": {
+   "mean": 6.61,
+   "median": 4.41,
+   "p95": 12.89,
+   "max": 18.73
+  },
+  "reading_grade": {
+   "mean": 5.1,
+   "max": 7.9
+  },
+  "words_per_explanation": 69
+ },
+ "results": [
+  {
+   "id": "amox-simple",
+   "category": "simple",
+   "input": "Amoxicilline 1 g : 1 cp x 2/j pendant 7 jours, au milieu des repas.",
+   "sent_to_ai": "Amoxicilline 1 g : 1 cp x 2/j pendant 7 jours, au milieu des repas.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amoxicilline: found",
+     "ok": true,
+     "expected": "amoxicilline",
+     "got": "Amoxicilline 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: times_per_day",
+     "ok": true,
+     "expected": 2,
+     "got": 2
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: prn",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Amoxicilline 1 g\n   Amoxicilline is to fight infections.\n   Take 1 Amoxicilline pill 2 times a day, with food, for 7 days.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicilline 1 g",
+      "common_name": "amoxicillin",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 18.73,
+   "time_total": 18.73,
+   "needs_review": false,
+   "reading_grade": 7.4
+  },
+  {
+   "id": "paracetamol-prn",
+   "category": "when needed",
+   "input": "Paracétamol 1 g : 1 cp toutes les 6 h si douleur ou fièvre, max 4 cp/j.",
+   "sent_to_ai": "Paracétamol 1 g : 1 cp toutes les 6 h si douleur ou fièvre, max 4 cp/j.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "paracetamol: found",
+     "ok": true,
+     "expected": "paracetamol",
+     "got": "Paracétamol 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: max_per_day",
+     "ok": true,
+     "expected": "4 tablets",
+     "got": "4 tablets"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: every_hours",
+     "ok": true,
+     "expected": 6,
+     "got": 6
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Paracétamol 1 g\n   Paracétamol is to help with pain and fever.\n   Take 1 Paracétamol pill only when you have pain or fever.\n   Wait at least 6 hours before you take another one.\n   Do not take more than 4 pills in one day.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Paracétamol 1 g: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: times per day (removed \"4 times a day\": it is not on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: maximum per day (added \"4 tablets\" from \"max 4 cp/j\" (the AI had missed it)).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Paracétamol 1 g",
+      "common_name": "paracetamol",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": 6,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "pain or fever",
+      "max_per_day": "4 tablets",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with pain and fever",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "times per day",
+        "why": "removed \"4 times a day\": it is not on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "maximum per day",
+        "why": "added \"4 tablets\" from \"max 4 cp/j\" (the AI had missed it)"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.25,
+   "time_total": 4.25,
+   "needs_review": false,
+   "reading_grade": 3.7
+  },
+  {
+   "id": "omeprazole-fasting",
+   "category": "simple",
+   "input": "Oméprazole 20 mg : 1 gél le matin à jeun pendant 14 jours.",
+   "sent_to_ai": "Oméprazole 20 mg : 1 gél le matin à jeun pendant 14 jours.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "omeprazole: found",
+     "ok": true,
+     "expected": "omeprazole",
+     "got": "Oméprazole 20 mg"
+    },
+    {
+     "group": "fields",
+     "name": "omeprazole: amount",
+     "ok": true,
+     "expected": "1 capsule",
+     "got": "1 capsule"
+    },
+    {
+     "group": "fields",
+     "name": "omeprazole: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning"
+     ],
+     "got": [
+      "morning"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "omeprazole: food",
+     "ok": true,
+     "expected": [
+      "empty stomach",
+      "before food"
+     ],
+     "got": "empty stomach"
+    },
+    {
+     "group": "fields",
+     "name": "omeprazole: duration",
+     "ok": true,
+     "expected": "14 days",
+     "got": "14 days"
+    },
+    {
+     "group": "fields",
+     "name": "omeprazole: prn",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Oméprazole 20 mg\n   Oméprazole is to help with heartburn and an upset stomach.\n   Take 1 Oméprazole pill in the morning, before you eat anything, for 14 days.\n\nWhen to take them each day\n   Morning: Oméprazole 20 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Oméprazole 20 mg",
+      "common_name": "omeprazole",
+      "form": "capsule",
+      "strength": "20 mg",
+      "amount_per_dose": "1 capsule",
+      "times_per_day": 1,
+      "times_of_day": [
+       "morning"
+      ],
+      "every_hours": null,
+      "food": "empty stomach",
+      "duration": "14 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with heartburn and an upset stomach",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.34,
+   "time_total": 4.34,
+   "needs_review": false,
+   "reading_grade": 3.8
+  },
+  {
+   "id": "metformin-refill",
+   "category": "chronic",
+   "input": "Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.",
+   "sent_to_ai": "Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "metformine: found",
+     "ok": true,
+     "expected": "metformine",
+     "got": "Metformine 850 mg"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "metformine: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: duration",
+     "ok": true,
+     "expected": "3 months",
+     "got": "3 months"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Metformine 850 mg\n   Metformine is to help control your blood sugar.\n   Take 1 Metformine pill in the morning and in the evening, with food, for 3 months.\n\nWhen to take them each day\n   Morning: Metformine 850 mg (1 pill)\n   Evening: Metformine 850 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Prescription: \"QSP 3 mois\" (the AI marked it unreadable (duration is not clear, should be written as 'for 3 months' instead of QSP), but it is understood).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Metformine 850 mg",
+      "common_name": "metformin",
+      "form": "tablet",
+      "strength": "850 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "3 months",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help control your blood sugar",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [
+     {
+      "level": "note",
+      "what": "\"QSP 3 mois\"",
+      "why": "the AI marked it unreadable (duration is not clear, should be written as 'for 3 months' instead of QSP), but it is understood"
+     }
+    ],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 7.08,
+   "time_total": 7.08,
+   "needs_review": false,
+   "reading_grade": 4.8
+  },
+  {
+   "id": "amlodipine-long-term",
+   "category": "chronic",
+   "input": "Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.",
+   "sent_to_ai": "Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amlodipine: found",
+     "ok": true,
+     "expected": "amlodipine",
+     "got": "Amlodipine 5 mg"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning"
+     ],
+     "got": [
+      "morning"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: food",
+     "ok": true,
+     "expected": null,
+     "got": null
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: duration",
+     "ok": true,
+     "expected": "long term",
+     "got": "long term"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"long-term\"",
+     "ok": true,
+     "expected": "long-term",
+     "got": "present"
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Amlodipine 5 mg\n   Amlodipine is to help control high blood pressure.\n   Take 1 Amlodipine pill in the morning.\n   This is a long-term treatment.\n\nWhen to take them each day\n   Morning: Amlodipine 5 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Amlodipine 5 mg",
+      "common_name": "amlodipine",
+      "form": "tablet",
+      "strength": "5 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "morning"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "long term",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help control high blood pressure",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.09,
+   "time_total": 4.09,
+   "needs_review": false,
+   "reading_grade": 5.1
+  },
+  {
+   "id": "ventolin-prn",
+   "category": "when needed",
+   "input": "Ventoline 100 µg : 2 bouffées si gêne respiratoire, max 8 bouffées/j.",
+   "sent_to_ai": "Ventoline 100 µg : 2 bouffées si gêne respiratoire, max 8 bouffées/j.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "ventoline: found",
+     "ok": true,
+     "expected": "ventoline",
+     "got": "Ventoline 100 µg"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: amount",
+     "ok": true,
+     "expected": "2 puffs",
+     "got": "2 puffs"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: max_per_day",
+     "ok": true,
+     "expected": "8 puffs",
+     "got": "8 puffs"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Ventoline 100 µg\n   Ventoline is to help you breathe easier when you have trouble breathing.\n   Take 2 puffs of Ventoline only when you need it.\n   Do not take more than 8 puffs in one day.\n\nYour doctor also says\n   Use as needed for breathing problems.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Ventoline 100 µg: times per day (removed \"8 times a day\": it is not on the prescription).",
+    "   CORRECTED  Ventoline 100 µg: maximum per day (added \"8 puffs\" from \"max 8 bouffées/j\" (the AI had missed it)).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Ventoline 100 µg",
+      "common_name": "salbutamol",
+      "form": "inhaler",
+      "strength": "100 µg",
+      "amount_per_dose": "2 puffs",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": null,
+      "max_per_day": "8 puffs",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help you breathe easier when you have trouble breathing",
+      "issues": [
+       {
+        "level": "note",
+        "what": "times per day",
+        "why": "removed \"8 times a day\": it is not on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "maximum per day",
+        "why": "added \"8 puffs\" from \"max 8 bouffées/j\" (the AI had missed it)"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [
+     "Use as needed for breathing problems."
+    ],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.51,
+   "time_total": 4.51,
+   "needs_review": false,
+   "reading_grade": 3.8
+  },
+  {
+   "id": "augmentin-sachet",
+   "category": "simple",
+   "input": "Augmentin 1 g/125 mg : 1 sachet x 3/j pendant 8 jours au début des repas.",
+   "sent_to_ai": "Augmentin 1 g/125 mg : 1 sachet x 3/j pendant 8 jours au début des repas.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "augmentin: found",
+     "ok": true,
+     "expected": "augmentin",
+     "got": "Augmentin 1 g/125 mg"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: amount",
+     "ok": true,
+     "expected": "1 sachet",
+     "got": "1 sachet"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: times_per_day",
+     "ok": true,
+     "expected": 3,
+     "got": 3
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: duration",
+     "ok": true,
+     "expected": "8 days",
+     "got": "8 days"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Augmentin 1 g/125 mg\n   Augmentin is to fight infections.\n   Take 1 sachet of Augmentin 3 times a day, with food, for 8 days.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Augmentin 1 g/125 mg",
+      "common_name": "amoxicillin clavulanate",
+      "form": "sachet",
+      "strength": "1 g/125 mg",
+      "amount_per_dose": "1 sachet",
+      "times_per_day": 3,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "8 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.09,
+   "time_total": 4.09,
+   "needs_review": false,
+   "reading_grade": 5.4
+  },
+  {
+   "id": "levothyrox-fasting",
+   "category": "simple",
+   "input": "Levothyrox 50 µg : 1 cp le matin à jeun, 30 min avant le petit-déjeuner.",
+   "sent_to_ai": "Levothyrox 50 µg : 1 cp le matin à jeun, 30 min avant le petit-déjeuner.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "levothyrox: found",
+     "ok": true,
+     "expected": "levothyrox",
+     "got": "Levothyrox 50 µg"
+    },
+    {
+     "group": "fields",
+     "name": "levothyrox: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "levothyrox: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning"
+     ],
+     "got": [
+      "morning"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "levothyrox: food",
+     "ok": true,
+     "expected": [
+      "empty stomach",
+      "before food"
+     ],
+     "got": "empty stomach"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Levothyrox 50 µg\n   Levothyrox is to replace thyroid hormone your body is not making.\n   Take 1 Levothyrox pill in the morning, before you eat anything.\n\nWhen to take them each day\n   Morning: Levothyrox 50 µg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Levothyrox 50 µg: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Levothyrox 50 µg",
+      "common_name": "levothyrox",
+      "form": "tablet",
+      "strength": "50 µg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "morning"
+      ],
+      "every_hours": null,
+      "food": "empty stomach",
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to replace thyroid hormone your body is not making",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 3.67,
+   "time_total": 3.67,
+   "needs_review": false,
+   "reading_grade": 6.4
+  },
+  {
+   "id": "cetirizine-evening",
+   "category": "simple",
+   "input": "Cétirizine 10 mg : 1 cp le soir pendant 10 jours.",
+   "sent_to_ai": "Cétirizine 10 mg : 1 cp le soir pendant 10 jours.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "cetirizine: found",
+     "ok": true,
+     "expected": "cetirizine",
+     "got": "Cétirizine 10 mg"
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: times_of_day",
+     "ok": true,
+     "expected": [
+      "evening"
+     ],
+     "got": [
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: food",
+     "ok": true,
+     "expected": null,
+     "got": null
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: duration",
+     "ok": true,
+     "expected": "10 days",
+     "got": "10 days"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Cétirizine 10 mg\n   Cétirizine is to help with allergies and itching.\n   Take 1 Cétirizine pill in the evening, for 10 days.\n\nWhen to take them each day\n   Evening: Cétirizine 10 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Cétirizine 10 mg: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Cétirizine 10 mg",
+      "common_name": "cetirizine",
+      "form": "tablet",
+      "strength": "10 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "evening"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "10 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with allergies and itching",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.06,
+   "time_total": 4.06,
+   "needs_review": false,
+   "reading_grade": 4.9
+  },
+  {
+   "id": "angine-full",
+   "category": "illness + several medicines",
+   "input": "Diagnostic : Angine bactérienne avec fièvre\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre ou douleur, max 3 cp/j.\n3) Strepsils : 1 pastille à sucer 3 fois par jour si mal de gorge.\nBoire beaucoup d'eau. Repos 3 jours. Revoir dans 10 jours si pas d'amélioration.",
+   "sent_to_ai": "Diagnostic : Angine bactérienne avec fièvre\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre ou douleur, max 3 cp/j.\n3) Strepsils : 1 pastille à sucer 3 fois par jour si mal de gorge.\nBoire beaucoup d'eau. Repos 3 jours. Revoir dans 10 jours si pas d'amélioration.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amoxicilline: found",
+     "ok": true,
+     "expected": "amoxicilline",
+     "got": "Amoxicilline 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: duration",
+     "ok": true,
+     "expected": "8 days",
+     "got": "8 days"
+    },
+    {
+     "group": "medicines",
+     "name": "paracetamol: found",
+     "ok": true,
+     "expected": "paracetamol",
+     "got": "Paracétamol 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: max_per_day",
+     "ok": true,
+     "expected": "3 tablets",
+     "got": "3 tablets"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: every_hours",
+     "ok": true,
+     "expected": 6,
+     "got": 6
+    },
+    {
+     "group": "medicines",
+     "name": "strepsils: found",
+     "ok": true,
+     "expected": "strepsils",
+     "got": "Strepsils"
+    },
+    {
+     "group": "fields",
+     "name": "strepsils: amount",
+     "ok": true,
+     "expected": "1 lozenge",
+     "got": "1 lozenge"
+    },
+    {
+     "group": "fields",
+     "name": "strepsils: times_per_day",
+     "ok": true,
+     "expected": 3,
+     "got": 3
+    },
+    {
+     "group": "fields",
+     "name": "strepsils: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /throat|angin|tonsil/",
+     "ok": true,
+     "expected": "throat|angin|tonsil",
+     "got": [
+      "bacterial throat infection with fever"
+     ]
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"10 days\"",
+     "ok": true,
+     "expected": "10 days",
+     "got": "present"
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Bacterial throat infection with fever.\n\nYour medicines\nYou have 3 medicines.\n\n1. Amoxicilline 1 g\n   Amoxicilline is to fight infections.\n   Take 1 Amoxicilline pill in the morning and in the evening, with food, for 8 days.\n\n2. Paracétamol 1 g\n   Paracétamol is to help with pain and fever.\n   Take 1 Paracétamol pill only when you have pain or fever.\n   Wait at least 6 hours before you take another one.\n   Do not take more than 3 pills in one day.\n\n3. Strepsils\n   Strepsils is to soothe sore throat and help you feel better.\n   Take 1 lozenge of Strepsils only when you have sore throat, up to 3 times a day.\n   Suck it slowly.\n\nWhen to take them each day\n   Morning: Amoxicilline 1 g (1 pill)\n   Evening: Amoxicilline 1 g (1 pill)\n   Only if needed: Paracétamol 1 g (1 pill), Strepsils (1 lozenge)\n\nYour doctor also says\n   Drink plenty of water. Rest for 3 days.\n   See your doctor again in 10 days if no improvement.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Amoxicilline 1 g: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: when needed (added \"only when needed\" from \"si fièvre ou douleur, max 3 cp/j.\" (the AI had missed it)).",
+    "   CORRECTED  Strepsils: how to use (added \"suck it slowly\" from \"à sucer\" (the AI had missed it)).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [
+     "bacterial throat infection with fever"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicilline 1 g",
+      "common_name": "amoxicillin",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "8 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Paracétamol 1 g",
+      "common_name": "paracetamol",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": 6,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "pain or fever",
+      "max_per_day": "3 tablets",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with pain and fever",
+      "issues": [
+       {
+        "level": "note",
+        "what": "when needed",
+        "why": "added \"only when needed\" from \"si fièvre ou douleur, max 3 cp/j.\" (the AI had missed it)"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Strepsils",
+      "common_name": "strepsils",
+      "form": "lozenge",
+      "strength": null,
+      "amount_per_dose": "1 lozenge",
+      "times_per_day": 3,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "sore throat",
+      "max_per_day": null,
+      "route": "Suck it slowly",
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to soothe sore throat and help you feel better",
+      "issues": [
+       {
+        "level": "note",
+        "what": "how to use",
+        "why": "added \"suck it slowly\" from \"à sucer\" (the AI had missed it)"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [
+     "Drink plenty of water. Rest for 3 days."
+    ],
+    "follow_up": "See your doctor again in 10 days if no improvement.",
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 11.86,
+   "time_total": 11.86,
+   "needs_review": false,
+   "reading_grade": 4.7
+  },
+  {
+   "id": "diabetes-hypertension",
+   "category": "illness + several medicines",
+   "input": "Diagnostic : Diabète type 2 et HTA\n1) Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.\n2) Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.\nRégime pauvre en sel et en sucre. Marcher 30 min par jour. Contrôle de la glycémie dans 1 mois.",
+   "sent_to_ai": "Diagnostic : Diabète type 2 et HTA\n1) Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.\n2) Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.\nRégime pauvre en sel et en sucre. Marcher 30 min par jour. Contrôle de la glycémie dans 1 mois.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "metformine: found",
+     "ok": true,
+     "expected": "metformine",
+     "got": "Metformine 850 mg"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "metformine: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: duration",
+     "ok": true,
+     "expected": "3 months",
+     "got": "3 months"
+    },
+    {
+     "group": "medicines",
+     "name": "amlodipine: found",
+     "ok": true,
+     "expected": "amlodipine",
+     "got": "Amlodipine 5 mg"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning"
+     ],
+     "got": [
+      "morning"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: food",
+     "ok": true,
+     "expected": null,
+     "got": null
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: duration",
+     "ok": true,
+     "expected": "long term",
+     "got": "long term"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /diabet/",
+     "ok": true,
+     "expected": "diabet",
+     "got": [
+      "type 2 diabetes",
+      "high blood pressure"
+     ]
+    },
+    {
+     "group": "illness",
+     "name": "illness /blood pressure|hypertension/",
+     "ok": true,
+     "expected": "blood pressure|hypertension",
+     "got": [
+      "type 2 diabetes",
+      "high blood pressure"
+     ]
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Type 2 diabetes and high blood pressure.\n\nYour medicines\nYou have 2 medicines.\n\n1. Metformine 850 mg\n   Metformine is to help control your blood sugar.\n   Take 1 Metformine pill in the morning and in the evening, with food, for 3 months.\n\n2. Amlodipine 5 mg\n   Amlodipine is to help control high blood pressure.\n   Take 1 Amlodipine pill in the morning.\n   This is a long-term treatment.\n\nWhen to take them each day\n   Morning: Metformine 850 mg (1 pill), Amlodipine 5 mg (1 pill)\n   Evening: Metformine 850 mg (1 pill)\n\nYour doctor also says\n   Low salt and sugar diet.\n   Walk 30 minutes a day.\n   Check your blood sugar in 1 month.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [
+     "type 2 diabetes",
+     "high blood pressure"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Metformine 850 mg",
+      "common_name": "metformin",
+      "form": "tablet",
+      "strength": "850 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "3 months",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help control your blood sugar",
+      "issues": []
+     },
+     {
+      "name_as_written": "Amlodipine 5 mg",
+      "common_name": "amlodipine",
+      "form": "tablet",
+      "strength": "5 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "morning"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "long term",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help control high blood pressure",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [
+     "Low salt and sugar diet.",
+     "Walk 30 minutes a day."
+    ],
+    "follow_up": "Check your blood sugar in 1 month.",
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 11.27,
+   "time_total": 11.27,
+   "needs_review": false,
+   "reading_grade": 4.6
+  },
+  {
+   "id": "illness-only",
+   "category": "illness only",
+   "input": "Diagnostic : grippe. Repos et boire beaucoup d'eau.",
+   "sent_to_ai": "Diagnostic : grippe. Repos et boire beaucoup d'eau.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /flu|influenza|grippe/",
+     "ok": true,
+     "expected": "flu|influenza|grippe",
+     "got": [
+      "flu"
+     ]
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Flu.\n\nYour doctor also says\n   Rest and drink plenty of water.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Prescription: \"Repos\" (the AI marked it unreadable (the dose is not written), but it is understood)."
+   ],
+   "structured": {
+    "conditions": [
+     "flu"
+    ],
+    "medicines": [],
+    "doctor_instructions": [
+     "Rest and drink plenty of water."
+    ],
+    "follow_up": null,
+    "issues": [
+     {
+      "level": "note",
+      "what": "\"Repos\"",
+      "why": "the AI marked it unreadable (the dose is not written), but it is understood"
+     }
+    ],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 3.6,
+   "time_total": 3.61,
+   "needs_review": false,
+   "reading_grade": 3.4
+  },
+  {
+   "id": "unclear-dose",
+   "category": "uncertain",
+   "input": "Diagnostic : Bronchite\n1) Augmentin 1 g : 1 sachet matin et soir pendant 7 jours.\n2) Toplexil sirop : c. à s. ???\n3) Ventoline : 2 bouffées si gêne respiratoire.\nRevoir si pas d'amélioration.",
+   "sent_to_ai": "Diagnostic : Bronchite\n1) Augmentin 1 g : 1 sachet matin et soir pendant 7 jours.\n2) Toplexil sirop : c. à s. ???\n3) Ventoline : 2 bouffées si gêne respiratoire.\nRevoir si pas d'amélioration.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "augmentin: found",
+     "ok": true,
+     "expected": "augmentin",
+     "got": "Augmentin 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: amount",
+     "ok": true,
+     "expected": "1 sachet",
+     "got": "1 sachet"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "medicines",
+     "name": "toplexil: found",
+     "ok": true,
+     "expected": "toplexil",
+     "got": "Toplexil sirop"
+    },
+    {
+     "group": "medicines",
+     "name": "ventoline: found",
+     "ok": true,
+     "expected": "ventoline",
+     "got": "Ventoline"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: amount",
+     "ok": true,
+     "expected": "2 puffs",
+     "got": "2 puffs"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /bronch/",
+     "ok": true,
+     "expected": "bronch",
+     "got": [
+      "bronchitis"
+     ]
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Bronchitis.\n\nYour medicines\nYou have 3 medicines.\n\n1. Augmentin 1 g\n   Augmentin is to fight infections.\n   Take 1 sachet of Augmentin in the morning and in the evening, for 7 days.\n\n2. Toplexil sirop\n   Toplexil sirop is to help with cough and sore throat.\n   Sorry, I am not sure about how much to take and how often to take it. Why: the amount to take each time is not written on the prescription; how many times a day is not written on the prescription. Please ask your doctor or pharmacist.\n\n3. Ventoline\n   Ventoline is to help you breathe easier when you have trouble breathing.\n   Take 2 puffs of Ventoline only when you have trouble breathing.\n\nYour doctor also says\n   See your doctor again if not improving.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: I am not sure about 3 things.",
+    "   NOT SURE   Toplexil sirop: part of this medicine's instructions (the dose is not written).",
+    "   NOT SURE   Toplexil sirop: how much to take (the amount to take each time is not written on the prescription).",
+    "   NOT SURE   Toplexil sirop: how often to take it (how many times a day is not written on the prescription).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [
+     "bronchitis"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Augmentin 1 g",
+      "common_name": "amoxicillin clavulanate",
+      "form": "sachet",
+      "strength": "1 g",
+      "amount_per_dose": "1 sachet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": []
+     },
+     {
+      "name_as_written": "Toplexil sirop",
+      "common_name": null,
+      "form": "syrup",
+      "strength": null,
+      "amount_per_dose": null,
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with cough and sore throat",
+      "issues": [
+       {
+        "level": "unsure",
+        "what": "part of this medicine's instructions",
+        "why": "the dose is not written"
+       },
+       {
+        "level": "unsure",
+        "what": "how much to take",
+        "why": "the amount to take each time is not written on the prescription"
+       },
+       {
+        "level": "unsure",
+        "what": "how often to take it",
+        "why": "how many times a day is not written on the prescription"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Ventoline",
+      "common_name": "salbutamol",
+      "form": "puff",
+      "strength": null,
+      "amount_per_dose": "2 puffs",
+      "times_per_day": 0,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "trouble breathing",
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help you breathe easier when you have trouble breathing",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": "See your doctor again if not improving.",
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 10.9,
+   "time_total": 10.9,
+   "needs_review": true,
+   "reading_grade": 4.8
+  },
+  {
+   "id": "missing-frequency",
+   "category": "uncertain",
+   "input": "Doliprane 1000 mg",
+   "sent_to_ai": "Doliprane 1000 mg",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "doliprane: found",
+     "ok": true,
+     "expected": "doliprane",
+     "got": "Doliprane 1000 mg"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"Sorry\"",
+     "ok": true,
+     "expected": "Sorry",
+     "got": "present"
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Doliprane 1000 mg\n   Doliprane is to help with pain and fever.\n   Sorry, I am not sure about how much to take and how often to take it. Why: I read \"1 tablet\", but the number 1 is not on the prescription, so I removed it; how many times a day is not written on the prescription. Please ask your doctor or pharmacist.\n\nSorry, I could not understand everything\n   \"Doliprane 1000 mg\": I could not read or understand this part of the prescription.\n   Please ask your doctor or pharmacist about this.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: I am not sure about 4 things.",
+    "   NOT SURE   Doliprane 1000 mg: part of this medicine's instructions (the dose is not written).",
+    "   NOT SURE   Doliprane 1000 mg: how much to take (I read \"1 tablet\", but the number 1 is not on the prescription, so I removed it).",
+    "   NOT SURE   Doliprane 1000 mg: how often to take it (how many times a day is not written on the prescription).",
+    "   NOT SURE   Prescription: \"Doliprane 1000 mg\" (I could not read or understand this part of the prescription).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Doliprane 1000 mg",
+      "common_name": "paracetamol",
+      "form": "tablet",
+      "strength": "1000 mg",
+      "amount_per_dose": null,
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with pain and fever",
+      "issues": [
+       {
+        "level": "unsure",
+        "what": "part of this medicine's instructions",
+        "why": "The dose is not written"
+       },
+       {
+        "level": "unsure",
+        "what": "how much to take",
+        "why": "I read \"1 tablet\", but the number 1 is not on the prescription, so I removed it"
+       },
+       {
+        "level": "unsure",
+        "what": "how often to take it",
+        "why": "how many times a day is not written on the prescription"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [
+     {
+      "level": "unsure",
+      "what": "\"Doliprane 1000 mg\"",
+      "why": "I could not read or understand this part of the prescription"
+     }
+    ],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 12.89,
+   "time_total": 12.89,
+   "needs_review": true,
+   "reading_grade": 5.5
+  },
+  {
+   "id": "personal-details",
+   "category": "privacy",
+   "input": "Dr. Karim Benali — Médecine générale, Casablanca\nTél : 0522 33 44 55 — INPE 123456\nPatient : Mme Fatima Zahra El Idrissi, 54 ans\nCIN : BE123456 — Mutuelle : CNOPS\nDate : 10/10/2026\n\nDiagnostic : Angine\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre, max 3 cp/j.\nRevoir dans 10 jours.\n\nSignature et cachet",
+   "sent_to_ai": "Diagnostic : Angine\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre, max 3 cp/j.\nRevoir dans 10 jours.",
+   "privacy_removed": [
+    "doctor or practice details",
+    "phone number or e-mail",
+    "patient name",
+    "ID or insurance number",
+    "signature or date"
+   ],
+   "checks": [
+    {
+     "group": "privacy",
+     "name": "\"Benali\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Fatima\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Idrissi\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"0522\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"BE123456\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"54 ans\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"10/10/2026\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"123456\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Benali\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Fatima\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Idrissi\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"0522\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"BE123456\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"54 ans\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"10/10/2026\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"123456\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "medicines",
+     "name": "amoxicilline: found",
+     "ok": true,
+     "expected": "amoxicilline",
+     "got": "Amoxicilline 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: duration",
+     "ok": true,
+     "expected": "8 days",
+     "got": "8 days"
+    },
+    {
+     "group": "medicines",
+     "name": "paracetamol: found",
+     "ok": true,
+     "expected": "paracetamol",
+     "got": "Paracétamol 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: max_per_day",
+     "ok": true,
+     "expected": "3 tablets",
+     "got": "3 tablets"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: every_hours",
+     "ok": true,
+     "expected": 6,
+     "got": 6
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /throat|angin|tonsil/",
+     "ok": true,
+     "expected": "throat|angin|tonsil",
+     "got": [
+      "throat infection"
+     ]
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Throat infection.\n\nYour medicines\nYou have 2 medicines.\n\n1. Amoxicilline 1 g\n   Amoxicilline is to fight infections.\n   Take 1 Amoxicilline pill in the morning and in the evening, with food, for 8 days.\n\n2. Paracétamol 1 g\n   Paracétamol is to help with pain and fever.\n   Take 1 Paracétamol pill only when you have fever.\n   Wait at least 6 hours before you take another one.\n   Do not take more than 3 pills in one day.\n\nWhen to take them each day\n   Morning: Amoxicilline 1 g (1 pill)\n   Evening: Amoxicilline 1 g (1 pill)\n   Only if needed: Paracétamol 1 g (1 pill)\n\nYour doctor also says\n   See your doctor again in 10 days.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   PRIVACY    Removed before sending to the AI: doctor or practice details, phone number or e-mail, patient name, ID or insurance number, signature or date. This tool only needs the medical part.",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Amoxicilline 1 g: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: form (max per day) (the AI wrote \"3 capsules\", corrected to \"3 tablets\" as written on the prescription).",
+    "   CORRECTED  Paracétamol 1 g: food (removed \"empty stomach\": the prescription does not mention meals for this medicine).",
+    "   CORRECTED  Paracétamol 1 g: when needed (added \"fever\" from \"si fièvre, max 3 cp/j.\" (the AI had missed it)).",
+    "   CORRECTED  Paracétamol 1 g: times per day (removed \"3 times a day\": it is not on the prescription).",
+    "   CORRECTED  Prescription: doctor's instruction (removed \"Take with food\": it repeats a medicine's own food instruction).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [
+     "throat infection"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicilline 1 g",
+      "common_name": "amoxicillin",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "8 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Paracétamol 1 g",
+      "common_name": "paracetamol",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": 6,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "fever",
+      "max_per_day": "3 tablets",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with pain and fever",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "form (max per day)",
+        "why": "the AI wrote \"3 capsules\", corrected to \"3 tablets\" as written on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "food",
+        "why": "removed \"empty stomach\": the prescription does not mention meals for this medicine"
+       },
+       {
+        "level": "note",
+        "what": "when needed",
+        "why": "added \"fever\" from \"si fièvre, max 3 cp/j.\" (the AI had missed it)"
+       },
+       {
+        "level": "note",
+        "what": "times per day",
+        "why": "removed \"3 times a day\": it is not on the prescription"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": "See your doctor again in 10 days.",
+    "issues": [
+     {
+      "level": "note",
+      "what": "doctor's instruction",
+      "why": "removed \"Take with food\": it repeats a medicine's own food instruction"
+     }
+    ],
+    "privacy_removed": [
+     "doctor or practice details",
+     "phone number or e-mail",
+     "patient name",
+     "ID or insurance number",
+     "signature or date"
+    ]
+   },
+   "time_to_dosing": 9.54,
+   "time_total": 9.55,
+   "needs_review": false,
+   "reading_grade": 5.1
+  },
+  {
+   "id": "inline-personal",
+   "category": "privacy",
+   "input": "Pour M. Ahmed Alaoui (06 12 34 56 78, ahmed.alaoui@mail.com) : Cétirizine 10 mg : 1 cp le soir pendant 10 jours.",
+   "sent_to_ai": "Pour (, ): Cétirizine 10 mg: 1 cp le soir pendant 10 jours.",
+   "privacy_removed": [
+    "e-mail",
+    "phone number",
+    "name"
+   ],
+   "checks": [
+    {
+     "group": "privacy",
+     "name": "\"Ahmed\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Alaoui\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"06 12 34 56 78\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"ahmed.alaoui@mail.com\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Ahmed\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Alaoui\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"06 12 34 56 78\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "privacy",
+     "name": "\"ahmed.alaoui@mail.com\" not in patient text",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "medicines",
+     "name": "cetirizine: found",
+     "ok": true,
+     "expected": "cetirizine",
+     "got": "Cétirizine 10 mg"
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: times_of_day",
+     "ok": true,
+     "expected": [
+      "evening"
+     ],
+     "got": [
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "cetirizine: duration",
+     "ok": true,
+     "expected": "10 days",
+     "got": "10 days"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Cétirizine 10 mg\n   Cétirizine is to help with allergies and itching.\n   Take 1 Cétirizine pill in the evening, for 10 days.\n\nWhen to take them each day\n   Evening: Cétirizine 10 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   PRIVACY    Removed before sending to the AI: e-mail, phone number, name. This tool only needs the medical part.",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Cétirizine 10 mg: form (amount per dose) (the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Cétirizine 10 mg",
+      "common_name": "cetirizine",
+      "form": "tablet",
+      "strength": "10 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "evening"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "10 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with allergies and itching",
+      "issues": [
+       {
+        "level": "note",
+        "what": "form (amount per dose)",
+        "why": "the AI wrote \"1 capsule\", corrected to \"1 tablet\" as written on the prescription"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": [
+     "e-mail",
+     "phone number",
+     "name"
+    ]
+   },
+   "time_to_dosing": 4.14,
+   "time_total": 4.14,
+   "needs_review": false,
+   "reading_grade": 4.9
+  },
+  {
+   "id": "english-latin",
+   "category": "English / Latin abbreviations",
+   "input": "Amoxicillin 500 mg 1 cap PO TID x 7 days",
+   "sent_to_ai": "Amoxicillin 500 mg 1 cap PO TID x 7 days",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amoxicillin: found",
+     "ok": true,
+     "expected": "amoxicillin",
+     "got": "Amoxicillin 500 mg"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: amount",
+     "ok": true,
+     "expected": "1 capsule",
+     "got": "1 capsule"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: times_per_day",
+     "ok": true,
+     "expected": 3,
+     "got": 3
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: prn",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Amoxicillin 500 mg\n   Amoxicillin is to fight infections.\n   Take 1 Amoxicillin pill 3 times a day, for 7 days.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Amoxicillin 500 mg: food (removed \"empty stomach\": the prescription does not mention meals for this medicine).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicillin 500 mg",
+      "common_name": "amoxicillin",
+      "form": "capsule",
+      "strength": "500 mg",
+      "amount_per_dose": "1 capsule",
+      "times_per_day": 3,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": "by mouth",
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to fight infections",
+      "issues": [
+       {
+        "level": "note",
+        "what": "food",
+        "why": "removed \"empty stomach\": the prescription does not mention meals for this medicine"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.94,
+   "time_total": 4.94,
+   "needs_review": false,
+   "reading_grade": 7.9
+  },
+  {
+   "id": "english-prn",
+   "category": "English / Latin abbreviations",
+   "input": "Ibuprofen 400 mg 1 tab PO q8h PRN pain, max 3 tabs/day",
+   "sent_to_ai": "Ibuprofen 400 mg 1 tab PO q8h PRN pain, max 3 tabs/day",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "ibuprofen: found",
+     "ok": true,
+     "expected": "ibuprofen",
+     "got": "Ibuprofen 400 mg"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofen: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofen: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofen: max_per_day",
+     "ok": true,
+     "expected": "3 tablets",
+     "got": "3 tablets"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofen: every_hours",
+     "ok": true,
+     "expected": 8,
+     "got": 8
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Ibuprofen 400 mg\n   Ibuprofen is for hurting and feeling hot.\n   Take 1 Ibuprofen pill only when you have pain.\n   Wait at least 8 hours before you take another one.\n   Do not take more than 3 pills in one day.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Ibuprofen 400 mg",
+      "common_name": "ibuprofen",
+      "form": "tablet",
+      "strength": "400 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": 8,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "pain",
+      "max_per_day": "3 tablets",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "for hurting and feeling hot",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.26,
+   "time_total": 4.27,
+   "needs_review": false,
+   "reading_grade": 4.6
+  },
+  {
+   "id": "voice-number-words",
+   "category": "voice transcript",
+   "input": "ibuprofène 400 milligrammes un comprimé trois fois par jour après les repas pendant cinq jours",
+   "sent_to_ai": "ibuprofène 400 milligrammes un comprimé trois fois par jour après les repas pendant cinq jours",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "ibuprofene: found",
+     "ok": true,
+     "expected": "ibuprofene",
+     "got": "ibuprofène 400 milligrammes"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofene: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofene: times_per_day",
+     "ok": true,
+     "expected": 3,
+     "got": 3
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofene: food",
+     "ok": true,
+     "expected": "after food",
+     "got": "after food"
+    },
+    {
+     "group": "fields",
+     "name": "ibuprofene: duration",
+     "ok": true,
+     "expected": "5 days",
+     "got": "5 days"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. ibuprofène 400 milligrammes\n   Ibuprofène is for hurting and feeling hot.\n   Take 1 Ibuprofène pill 3 times a day, after eating, for 5 days.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "ibuprofène 400 milligrammes",
+      "common_name": "ibuprofen",
+      "form": "tablet",
+      "strength": "400 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 3,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": "after food",
+      "duration": "5 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "for hurting and feeling hot",
+      "issues": []
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 3.43,
+   "time_total": 3.43,
+   "needs_review": false,
+   "reading_grade": 6.3
+  },
+  {
+   "id": "methotrexate-weekly",
+   "category": "high risk",
+   "input": "Méthotrexate 10 mg : 1 cp une fois par semaine, le lundi.",
+   "sent_to_ai": "Méthotrexate 10 mg : 1 cp une fois par semaine, le lundi.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "methotrexate: found",
+     "ok": true,
+     "expected": "methotrexate",
+     "got": "Méthotrexate 10 mg"
+    },
+    {
+     "group": "fields",
+     "name": "methotrexate: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"week\"",
+     "ok": true,
+     "expected": "week",
+     "got": "present"
+    },
+    {
+     "group": "wording",
+     "name": "never says \"once a day\"",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "wording",
+     "name": "never says \"times a day\"",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Méthotrexate 10 mg\n   Méthotrexate is to treat inflammation and joint pain.\n   Take 1 Méthotrexate pill once a week, on Monday.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.",
+    "   HIGH RISK  Méthotrexate 10 mg: high-risk medicine (methotrexate is taken once a WEEK; taking it daily is dangerous).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Méthotrexate 10 mg",
+      "common_name": "methotrexate",
+      "form": "tablet",
+      "strength": "10 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": 1,
+      "weekday": "Monday",
+      "purpose": "to treat inflammation and joint pain",
+      "issues": [
+       {
+        "level": "risk",
+        "what": "high-risk medicine",
+        "why": "methotrexate is taken once a WEEK; taking it daily is dangerous"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 3.25,
+   "time_total": 3.25,
+   "needs_review": true,
+   "reading_grade": 5.2
+  },
+  {
+   "id": "nonsense",
+   "category": "not a prescription",
+   "input": "bonjour docteur merci pour tout",
+   "sent_to_ai": "bonjour docteur merci pour tout",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "refusal",
+     "name": "refuses and explains why",
+     "ok": true,
+     "expected": "a 'Sorry ... Why' message",
+     "got": "Sorry, I could not understand this prescription. Why: I could not find any medicine or illness in this text (\"bonjour docteur merci pour tout\": Greeting and thank you, no actual prescription information). Please check the text, or ask a doctor or pharmacist to explain it."
+    }
+   ],
+   "error": "Sorry, I could not understand this prescription. Why: I could not find any medicine or illness in this text (\"bonjour docteur merci pour tout\": Greeting and thank you, no actual prescription information). Please check the text, or ask a doctor or pharmacist to explain it.",
+   "output": "",
+   "review": [],
+   "structured": null,
+   "time_to_dosing": null,
+   "time_total": 7.78
+  },
+  {
+   "id": "personal-only",
+   "category": "not a prescription",
+   "input": "Patient : M. Youssef Bennani, 06 11 22 33 44",
+   "sent_to_ai": "",
+   "privacy_removed": [
+    "patient name"
+   ],
+   "checks": [
+    {
+     "group": "privacy",
+     "name": "\"Youssef\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"Bennani\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "privacy",
+     "name": "\"06 11 22 33 44\" not sent to the AI",
+     "ok": true,
+     "expected": "removed",
+     "got": "removed"
+    },
+    {
+     "group": "refusal",
+     "name": "refuses and explains why",
+     "ok": true,
+     "expected": "a 'Sorry ... Why' message",
+     "got": "Sorry, I could not find any medical information in this text. Why: it only seems to contain personal details (patient name), which this tool does not need."
+    }
+   ],
+   "error": "Sorry, I could not find any medical information in this text. Why: it only seems to contain personal details (patient name), which this tool does not need.",
+   "output": "",
+   "review": [],
+   "structured": null,
+   "time_to_dosing": null,
+   "time_total": 0.0
+  },
+  {
+   "id": "warfarin",
+   "category": "high risk",
+   "input": "Coumadine 5 mg : 1 cp le soir. Contrôle INR dans 1 semaine.",
+   "sent_to_ai": "Coumadine 5 mg : 1 cp le soir. Contrôle INR dans 1 semaine.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "coumadine: found",
+     "ok": true,
+     "expected": "coumadine",
+     "got": "Coumadine 5 mg"
+    },
+    {
+     "group": "fields",
+     "name": "coumadine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "coumadine: times_of_day",
+     "ok": true,
+     "expected": [
+      "evening"
+     ],
+     "got": [
+      "evening"
+     ]
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Coumadine 5 mg\n   Coumadine is to prevent blood clots from forming.\n   Take 1 Coumadine pill in the evening.\n\nWhen to take them each day\n   Evening: Coumadine 5 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.",
+    "   HIGH RISK  Coumadine 5 mg: high-risk medicine (blood thinner: a wrong dose can cause bleeding or clots).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Coumadine 5 mg",
+      "common_name": "warfarin",
+      "form": "tablet",
+      "strength": "5 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "evening"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to prevent blood clots from forming",
+      "issues": [
+       {
+        "level": "risk",
+        "what": "high-risk medicine",
+        "why": "blood thinner: a wrong dose can cause bleeding or clots"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 4.41,
+   "time_total": 4.41,
+   "needs_review": true,
+   "reading_grade": 5.2
+  },
+  {
+   "id": "insulin",
+   "category": "high risk",
+   "input": "Insuline Lantus : 20 unités le soir au coucher. Traitement au long cours.",
+   "sent_to_ai": "Insuline Lantus : 20 unités le soir au coucher. Traitement au long cours.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "insuline: found",
+     "ok": true,
+     "expected": "insuline",
+     "got": "Insuline Lantus 20 unités"
+    },
+    {
+     "group": "fields",
+     "name": "insuline: times_of_day",
+     "ok": true,
+     "expected": [
+      "bedtime"
+     ],
+     "got": [
+      "bedtime"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "insuline: duration",
+     "ok": true,
+     "expected": "long term",
+     "got": "long term"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"20\"",
+     "ok": true,
+     "expected": "20",
+     "got": "present"
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Insuline Lantus 20 unités\n   Insuline Lantus is to control sugar in your blood.\n   Take 20 units of Insuline Lantus at bedtime.\n   This is a long-term treatment.\n\nWhen to take them each day\n   Bedtime: Insuline Lantus 20 unités (20 units)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.",
+    "   HIGH RISK  Insuline Lantus 20 unités: high-risk medicine (insulin: a wrong dose can cause dangerously low sugar).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Insuline Lantus 20 unités",
+      "common_name": "insulin",
+      "form": "injection",
+      "strength": "20 units",
+      "amount_per_dose": "20 units",
+      "times_per_day": 1,
+      "times_of_day": [
+       "bedtime"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "long term",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to control sugar in your blood",
+      "issues": [
+       {
+        "level": "risk",
+        "what": "high-risk medicine",
+        "why": "insulin: a wrong dose can cause dangerously low sugar"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 5.66,
+   "time_total": 5.66,
+   "needs_review": true,
+   "reading_grade": 5.5
+  },
+  {
+   "id": "child-dose",
+   "category": "high risk",
+   "input": "Paracétamol sirop enfant : 1 dose-poids 15 kg toutes les 6 h si fièvre, max 4 doses/j.",
+   "sent_to_ai": "Paracétamol sirop enfant : 1 dose-poids 15 kg toutes les 6 h si fièvre, max 4 doses/j.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "paracetamol: found",
+     "ok": true,
+     "expected": "paracetamol",
+     "got": "Paracétamol sirop enfant"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: every_hours",
+     "ok": true,
+     "expected": 6,
+     "got": 6
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Paracétamol sirop enfant\n   Paracétamol sirop enfant is to help with pain and fever.\n   Take 1 dose-weight of Paracétamol sirop enfant only when you have fever.\n   Wait at least 6 hours before you take another one.\n   Do not take more than 4 dose-weights in one day.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.",
+    "   HIGH RISK  Paracétamol sirop enfant: child's dose (doses for children depend on age and weight).",
+    "   CORRECTED  Paracétamol sirop enfant: times per day (removed \"4 times a day\": it is not on the prescription).",
+    "   CORRECTED  Paracétamol sirop enfant: maximum per day (added \"4 dose-weights\" from \"max 4 doses/j\" (the AI had missed it)).",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Paracétamol sirop enfant",
+      "common_name": "paracetamol",
+      "form": "syrup",
+      "strength": "dose-weight 15 kg",
+      "amount_per_dose": "1 dose-weight",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": 6,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "fever",
+      "max_per_day": "4 dose-weights",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "purpose": "to help with pain and fever",
+      "issues": [
+       {
+        "level": "note",
+        "what": "times per day",
+        "why": "removed \"4 times a day\": it is not on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "maximum per day",
+        "why": "added \"4 dose-weights\" from \"max 4 doses/j\" (the AI had missed it)"
+       },
+       {
+        "level": "risk",
+        "what": "child's dose",
+        "why": "doses for children depend on age and weight"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 6.93,
+   "time_total": 6.93,
+   "needs_review": true,
+   "reading_grade": 4.7
+  }
+ ]
+}
