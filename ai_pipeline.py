@@ -232,6 +232,7 @@ JSON keys (OMIT any key that is not stated in the prescription):
   "per_day": number of times per day,
   "times": subset of ["morning", "noon", "evening", "bedtime"],
   "every_h": hours between doses,
+  "per_week": number of times per WEEK, only for weekly medicines (e.g. "1 fois par semaine"),
   "food": with food | before food | after food | empty stomach,
   "duration": e.g. "7 days", "3 months", "long term",
   "prn": true if only when needed,
@@ -243,7 +244,7 @@ JSON keys (OMIT any key that is not stated in the prescription):
 "diagnosis": [illnesses written by the doctor, in simple everyday English, e.g. "throat infection", "high blood pressure", "type 2 diabetes"],
 "instructions": [other doctor instructions, as very short, simple ENGLISH sentences (max 8 words)],
 "follow_up": when to see the doctor again, plain English sentence,
-"unreadable": [{"text": a part you could not understand, "why": short reason}]}
+"unreadable": [{"text": a part you could not understand, "why": short reason}] (never list text you already used above)}
 
 Rules:
 - Copy every number EXACTLY. Never calculate, convert or guess a dose, frequency or duration.
@@ -352,6 +353,7 @@ def _flag(target: dict, level: str, what: str, why: str) -> None:
 
     level "unsure": shown to the patient (with an apology) and to the doctor.
     level "note":   shown to the doctor only (an automatic correction).
+    level "risk":   shown to the doctor only, and the doctor must confirm (high-risk medicine).
     """
     target.setdefault("issues", []).append({"level": level, "what": what.strip(), "why": why.strip().rstrip(".")})
 
@@ -386,6 +388,8 @@ def _normalize_dosing(data: dict) -> dict:
             "needed_for": _plain(_clean_reason(med.get("prn_for"))),
             "max_per_day": _with_unit(_as_str(med.get("max_day")), _as_str(med.get("amount"))),
             "route": _as_str(med.get("route")),
+            "times_per_week": _as_int(med.get("per_week")),
+            "weekday": None,
             "purpose": None,  # filled in by _add_drug_info()
             "issues": [{"level": "unsure", "what": "part of this medicine's instructions", "why": why.rstrip(".")}
                        for why in _as_list(med.get("unclear"))],
@@ -561,7 +565,7 @@ def _fix_form(med: dict, source_text: str) -> None:
 
 _UNITS_EN = {"jour": "day", "jours": "days", "semaine": "week", "semaines": "weeks", "mois": "months",
              "day": "day", "days": "days", "week": "week", "weeks": "weeks", "month": "month", "months": "months"}
-_DURATION_RE = re.compile(r"\b(?:pendant|durant|qsp|for|x)\s*(\d+)\s*(jours?|semaines?|mois|days?|weeks?|months?)\b", re.IGNORECASE)
+_DURATION_RE = re.compile(r"\b(?:pendant|durant|qsp|for|x)\s*(\d+|un|une|deux|trois|quatre|cinq|six|sept|huit|dix|quinze|vingt|trente)\s*(jours?|semaines?|mois|days?|weeks?|months?)\b", re.IGNORECASE)
 _LONG_TERM_RE = re.compile(r"\b(au long cours|à vie|a vie|long terme|traitement chronique|à poursuivre|ne pas arr[êe]ter|long[- ]term|for life|ongoing)\b", re.IGNORECASE)
 
 
@@ -579,6 +583,50 @@ _PRN_REASONS = [("douleur", "pain"), ("fi[èe]vre", "fever"), ("mal de gorge", "
 _TIME_EVIDENCE = [("morning", r"\bmatin\b|\bmorning\b"), ("noon", r"\bmidi\b|\bnoon\b|\blunch\b"),
                   ("evening", r"\bsoir\b|\bevening\b"), ("bedtime", r"\bcoucher\b|\bbedtime\b|\bhs\b")]
 _PER_DAY_RE = re.compile(r"(?:x\s*(\d+)\s*/\s*j|(\d+)\s*(?:fois|x)\s*(?:par|/)\s*j|(\d+)\s*times? (?:a|per) day)", re.IGNORECASE)
+
+
+_NUM = r"(\d+|" + "|".join(w for w in ("un", "une", "one", "deux", "two", "trois", "three", "quatre", "four",
+                                         "cinq", "five", "six", "huit", "eight", "dix", "ten")) + r")"
+_PER_DAY_WORDS_RE = re.compile(_NUM + r"\s*(?:fois|x|times?)\s*(?:par|/|a|per)\s*(?:j\b|jour|day)", re.IGNORECASE)
+_PER_WEEK_RE = re.compile(r"(?:" + _NUM + r"\s*(?:fois|x|times?)?\s*(?:par|/|a|per)\s*(?:semaine|sem\b|week)|hebdomadaire|weekly|once a week)",
+                          re.IGNORECASE)
+_EVERY_HOURS_RE = re.compile(r"toutes les\s*(\d+)\s*h|\bq\s?(\d+)\s?h\b|every\s*(\d+)\s*h", re.IGNORECASE)
+_MAX_PER_DAY_RE = re.compile(r"max(?:imum)?\.?\s*" + _NUM + r"\s*([a-zéèû.]+)?\s*(?:/|par|per|a)\s*(?:j\b|jour|day)", re.IGNORECASE)
+_UNIT_WORDS = [(r"cp|comprim|tab", "tablet"), (r"g[ée]l|cap", "capsule"), (r"sach", "sachet"), (r"bouff|puff", "puff"),
+               (r"past|lozenge", "lozenge"), (r"goutt|drop", "drop")]
+_WEEKDAYS = [(r"\blundi|\bmonday", "Monday"), (r"\bmardi|\btuesday", "Tuesday"), (r"\bmercredi|\bwednesday", "Wednesday"),
+             (r"\bjeudi|\bthursday", "Thursday"), (r"\bvendredi|\bfriday", "Friday"), (r"\bsamedi|\bsaturday", "Saturday"),
+             (r"\bdimanche|\bsunday", "Sunday")]
+_LATIN_PER_DAY = {"qd": 1, "od": 1, "bid": 2, "tid": 3, "qid": 4}
+
+
+def _per_day_in_line(line: str) -> int | None:
+    """Times per day as written: "x 2/j", "3 fois par jour", "trois fois par jour", "TID"."""
+    if m := _PER_DAY_RE.search(line):
+        return int(next(g for g in m.groups() if g))
+    if m := _PER_DAY_WORDS_RE.search(line):
+        return _number_value(m.group(1))
+    if m := re.search(r"\b(qd|od|bid|tid|qid)\b", line, re.IGNORECASE):
+        return _LATIN_PER_DAY[m.group(1).lower()]
+    return None
+
+
+# Phrases the code already understands; the model sometimes lists them as "unreadable" anyway.
+_UNDERSTOOD_RE = re.compile(r"\bqsp\b|long cours|long terme|[àa] jeun|repas|si besoin|si douleur|si fi[èe]vre|matin|soir|coucher|"
+                            r"\brepos\b|\brest\b|boire|hydrat|r[ée]gime|marche", re.IGNORECASE)
+
+
+def _drop_understood_unreadable(extraction: dict, source_text: str) -> None:
+    """Turn "unreadable" items the code does understand into doctor-only notes."""
+    kept, notes = [], []
+    for issue in extraction["issues"]:
+        text = issue["what"].strip('"')
+        if issue["level"] == "unsure" and _UNDERSTOOD_RE.search(text) and text.lower() in source_text.lower():
+            notes.append({"level": "note", "what": issue["what"],
+                          "why": f"the AI marked it unreadable ({_lower_first(issue['why'])}), but it is understood"})
+        else:
+            kept.append(issue)
+    extraction["issues"] = kept + notes
 
 
 def _check_against_line(med: dict, source_text: str) -> None:
@@ -613,9 +661,38 @@ def _check_against_line(med: dict, source_text: str) -> None:
         med["times_of_day"] = [t for t, pattern in _TIME_EVIDENCE if re.search(pattern, line, re.IGNORECASE)]
         if med["times_of_day"]:
             _flag(med, "note", "time of day", f"added {', '.join(med['times_of_day'])} from the prescription (the AI had missed it)")
-    if not med.get("times_per_day") and (m := _PER_DAY_RE.search(line)):
-        med["times_per_day"] = int(next(g for g in m.groups() if g))
-        _flag(med, "note", "times per day", f'added {med["times_per_day"]} times a day from "{m.group(0)}" (the AI had missed it)')
+
+    # Weekly medicines (e.g. methotrexate): a daily reading here would be dangerous.
+    if m := _PER_WEEK_RE.search(line):
+        per_week = _number_value(m.group(1)) if m.group(1) else 1
+        if med.get("times_per_week") != per_week or med.get("times_per_day"):
+            _flag(med, "note", "weekly", f'read "{m.group(0).strip()}" as {per_week} time(s) a week')
+        med["times_per_week"], med["times_per_day"] = per_week, None
+        if day := next((en for fr, en in _WEEKDAYS if re.search(fr, line, re.IGNORECASE)), None):
+            med["weekday"] = day
+
+    written_per_day = _per_day_in_line(line)
+    if med.get("times_per_day") and med["times_per_day"] != written_per_day \
+            and med["times_per_day"] != len(med.get("times_of_day") or []):
+        _flag(med, "note", "times per day", f'removed "{med["times_per_day"]} times a day": it is not on the prescription')
+        med["times_per_day"] = None
+    if not med.get("times_per_day") and written_per_day and not med.get("times_per_week"):
+        med["times_per_day"] = written_per_day
+        _flag(med, "note", "times per day", f"added {written_per_day} times a day from the prescription (the AI had missed it)")
+
+    if not med.get("every_hours") and (m := _EVERY_HOURS_RE.search(line)):
+        med["every_hours"] = int(next(g for g in m.groups() if g))
+        _flag(med, "note", "hours between doses", f'added "every {med["every_hours"]} hours" from "{m.group(0)}" (the AI had missed it)')
+
+    if not med.get("max_per_day") and (m := _MAX_PER_DAY_RE.search(line)):
+        number = _number_value(m.group(1))
+        unit = next((en for pattern, en in _UNIT_WORDS if m.group(2) and re.match(pattern, m.group(2), re.IGNORECASE)), None)
+        med["max_per_day"] = _with_unit(str(number), f"1 {unit}" if unit else med.get("amount_per_dose"))
+        _flag(med, "note", "maximum per day", f'added "{med["max_per_day"]}" from "{m.group(0)}" (the AI had missed it)')
+
+    if med.get("duration") and "long" in med["duration"].lower() and not _LONG_TERM_RE.search(line):
+        _flag(med, "note", "duration", f'removed "{med["duration"]}": the prescription does not say it is long-term')
+        med["duration"] = None
 
     if not med.get("route") and re.search(r"[àa] sucer|sucer", line, re.IGNORECASE):
         med["route"] = "Suck it slowly"
@@ -632,10 +709,61 @@ def _fill_duration(med: dict, line: str) -> None:
     if _LONG_TERM_RE.search(line):
         med["duration"] = "long term"  # "do not stop" matters more than a refill period
     elif not med.get("duration") and (m := _DURATION_RE.search(line)):
-        number, unit = m.group(1), _UNITS_EN[m.group(2).lower()]
+        number, unit = str(_number_value(m.group(1))), _UNITS_EN[m.group(2).lower()]
         if number == "1" and unit == "months":
             unit = "month"
         med["duration"] = f"{number} {unit}"
+
+
+_NUMBER_WORDS = {
+    "un": 1, "une": 1, "one": 1, "once": 1, "deux": 2, "two": 2, "twice": 2, "trois": 3, "three": 3,
+    "quatre": 4, "four": 4, "cinq": 5, "five": 5, "six": 6, "sept": 7, "seven": 7, "huit": 8, "eight": 8,
+    "neuf": 9, "nine": 9, "dix": 10, "ten": 10, "douze": 12, "twelve": 12, "quinze": 15, "fifteen": 15,
+    "vingt": 20, "twenty": 20, "trente": 30, "thirty": 30,
+    "qd": 1, "od": 1, "bid": 2, "tid": 3, "qid": 4,
+}
+_NUMBER_WORD_RE = re.compile(r"\b(" + "|".join(_NUMBER_WORDS) + r")\b", re.IGNORECASE)
+
+
+def _number_value(token: str) -> int | None:
+    token = token.lower()
+    return int(token) if token.isdigit() else _NUMBER_WORDS.get(token)
+
+
+def numbers_on_prescription(text: str) -> set[str]:
+    """Digits on the prescription, plus numbers written as words ("cinq jours") or Latin
+    abbreviations ("TID" = 3), so they count as written by the doctor."""
+    return _numbers(text) | {str(_NUMBER_WORDS[w.lower()]) for w in _NUMBER_WORD_RE.findall(text)}
+
+
+# Medicines where a misunderstanding can seriously harm the patient. Matched on the name as
+# written or the generic name. The doctor must always confirm these explicitly.
+_HIGH_RISK = [
+    (r"m[ée]thotrexate|novatrex|imeth", "methotrexate is taken once a WEEK; taking it daily is dangerous"),
+    (r"warfarin|coumadine|sintrom|ac[ée]nocoumarol|previscan|fluindione|apixaban|eliquis|rivaroxaban|xarelto|dabigatran|pradaxa",
+     "blood thinner: a wrong dose can cause bleeding or clots"),
+    (r"h[ée]parine|heparin|enoxaparin|lovenox|innohep|tinzaparin", "blood thinner injection"),
+    (r"insulin|insuline|lantus|levemir|novorapid|humalog|toujeo|tresiba|apidra|actrapid|insulatard", "insulin: a wrong dose can cause dangerously low sugar"),
+    (r"morphin|oxycodon|fentanyl|tramadol|cod[ée]ine|m[ée]thadone|buprenorphin|tapentadol", "opioid painkiller"),
+    (r"lithium|t[ée]ralithe", "lithium: a small dose change can be toxic"),
+    (r"digoxin|digoxine", "digoxin: a small dose change can be toxic"),
+    (r"colchicin", "colchicine: too much is toxic"),
+]
+_CHILD_RE = re.compile(r"\b(enfant|nourrisson|b[ée]b[ée]|p[ée]diatrique|dose[- ]poids|child|infant|baby|\d+\s*kg)\b", re.IGNORECASE)
+
+
+def _flag_high_risk(med: dict, source_text: str) -> None:
+    names = f"{med['name_as_written']} {med.get('common_name') or ''}"
+    for pattern, why in _HIGH_RISK:
+        if re.search(pattern, names, re.IGNORECASE):
+            _flag(med, "risk", "high-risk medicine", why)
+            break
+    else:
+        if med.get("times_per_week"):
+            _flag(med, "risk", "weekly medicine", "taken once a week; a daily reading would be dangerous")
+    line = _source_line(med, source_text) or ""
+    if _CHILD_RE.search(line):
+        _flag(med, "risk", "child's dose", "doses for children depend on age and weight")
 
 
 def _safety_check(extraction: dict, source_text: str) -> dict:
@@ -645,13 +773,17 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
     automatic corrections and dropped inventions are all recorded as issues with a reason,
     so nothing is fixed or removed silently.
     """
-    source_numbers = _numbers(source_text)
+    source_numbers = numbers_on_prescription(source_text)
+    _drop_understood_unreadable(extraction, source_text)
+    for issue in extraction["issues"] + [i for m in extraction["medicines"] for i in m.get("issues", [])]:
+        if _numbers(issue["why"]) - source_numbers:  # e.g. "it could be 500 mg" when 500 is not written
+            issue["why"] = "I could not read or understand this part of the prescription"
     for med in extraction["medicines"]:
         _fix_form(med, source_text)
         _check_against_line(med, source_text)
         for field, label in (
             ("strength", "strength"),
-            ("amount_per_dose", "amount to take"),
+            ("amount_per_dose", "how much to take"),
             ("every_hours", "time between doses"),
             ("duration", "length of treatment"),
             ("max_per_day", "maximum per day"),
@@ -662,7 +794,7 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
             unknown = _numbers(str(value)) - source_numbers
             if unknown:
                 med[field] = None
-                _flag(med, "unsure", f"the {label}",
+                _flag(med, "unsure", label if label.startswith("how") else f"the {label}",
                       f'I read "{value}", but the number {", ".join(sorted(unknown))} is not on the prescription, so I removed it')
 
         # Times per day must agree with the listed moments of the day, when both are given.
@@ -672,9 +804,12 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
                   f"the prescription seems to say {n} times a day, but names {len(moments)} time(s) of the day")
 
         # Things the patient needs that the prescription does not give.
-        if not med.get("amount_per_dose"):
+        _flag_high_risk(med, source_text)
+        flagged = {i["what"] for i in med.get("issues", [])}
+        if not med.get("amount_per_dose") and "how much to take" not in flagged:
             _flag(med, "unsure", "how much to take", "the amount to take each time is not written on the prescription")
-        if not (med["only_when_needed"] or med.get("times_per_day") or med.get("times_of_day") or med.get("every_hours")):
+        if not (med["only_when_needed"] or med.get("times_per_day") or med.get("times_of_day")
+                or med.get("every_hours") or med.get("times_per_week")):
             _flag(med, "unsure", "how often to take it", "how many times a day is not written on the prescription")
 
     # Small models copy the follow-up from the prompt example; keep it only if the prescription has one.
@@ -689,6 +824,9 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
             continue  # already shown as the follow-up visit
         if _FOOD_INSTRUCTION_RE.fullmatch(line.strip().rstrip(".")) and any(m.get("food") for m in extraction["medicines"]):
             _flag(extraction, "note", "doctor's instruction", f'removed "{line}": it repeats a medicine\'s own food instruction')
+            continue
+        if _ADVICE_RE.search(line):
+            _flag(extraction, "note", "doctor's instruction", f'removed "{line}": general advice that is not on the prescription')
             continue
         if unknown := _numbers(line) - source_numbers:
             _flag(extraction, "note", "doctor's instruction",
@@ -709,6 +847,11 @@ _FOLLOW_UP_RE = re.compile(
     re.IGNORECASE,
 )
 _FOOD_INSTRUCTION_RE = re.compile(r"(take (it |them )?)?(with|during|before|after) (food|meals?|eating)", re.IGNORECASE)
+_ADVICE_RE = re.compile(
+    r"recommended dose|do not exceed|as directed|consult (your|a|the) (doctor|pharmacist)|if (symptoms|signs|it) persists?|"
+    r"keep out of reach|read the (leaflet|label)|ask your (doctor|pharmacist)",
+    re.IGNORECASE,
+)
 _REVISIT_RE = re.compile(r"\b(revisit|return|come back|see (your|the) doctor|follow[- ]?up|check[- ]?up)\b", re.IGNORECASE)
 _DOSE_IN_TEXT_RE = re.compile(r"\d+(?:[.,]\d+)?\s*(mg|g|ml|µg|mcg|tablets?|capsules?|cp|gél|sachets?|drops?|puffs?)\b", re.IGNORECASE)
 
@@ -769,7 +912,7 @@ def stream_prescription(text: str):
         {"type": "dosing", "prescription": dict}               # illness + how to take each medicine
         {"type": "medicine", "index": int, "medicine": dict}   # once per medicine, when its purpose arrives
         {"type": "done", "prescription": dict, "text": str,    # complete explanation for the patient
-         "review": [str], "needs_review": bool}                # for the doctor: doubts and corrections
+         "review": [str], "needs_review": bool}                # for the doctor: risks, doubts and corrections
     """
     extraction = _read_dosing(text)
     yield {"type": "dosing", "prescription": extraction}
@@ -839,6 +982,11 @@ def _how_sentences(med: dict) -> list[str]:
         n = med.get("times_per_day")
         if moments:
             first += " " + _join_or([_TIME_WORDS[m] for m in moments], "and")
+        elif med.get("times_per_week"):
+            w = med["times_per_week"]
+            first += " once a week" if w == 1 else f" {w} times a week"
+            if med.get("weekday"):
+                first += f", on {med['weekday']}"
         elif n:
             first += " once a day" if n == 1 else f" {n} times a day"
 
@@ -944,7 +1092,7 @@ def render_footer(extraction: dict) -> list[str]:
 
 def needs_review(extraction: dict) -> bool:
     """True when something on the prescription was not understood with certainty."""
-    return any(i["level"] == "unsure" for i in _all_issues(extraction))
+    return any(i["level"] in ("unsure", "risk") for i in _all_issues(extraction))
 
 
 def _all_issues(extraction: dict) -> list[dict]:
@@ -957,14 +1105,19 @@ def render_review(extraction: dict) -> list[str]:
     issues = _all_issues(extraction)
     unsure = [i for i in issues if i["level"] == "unsure"]
     notes = [i for i in issues if i["level"] == "note"]
+    risks = [i for i in issues if i["level"] == "risk"]
 
     out = ["For the doctor: please review"]
     if removed := extraction.get("privacy_removed"):
         out.append(f"   PRIVACY    Removed before sending to the AI: {', '.join(removed)}. This tool only needs the medical part.")
+    if risks:
+        out.append("   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.")
     if unsure:
         out.append(f"   CHECK BEFORE GIVING THIS TO THE PATIENT: I am not sure about {len(unsure)} thing{'s' if len(unsure) != 1 else ''}.")
-    else:
+    elif not risks:
         out.append("   Everything on the prescription was understood.")
+    for i in risks:
+        out.append(f"   HIGH RISK  {i['source']}: {i['what']} ({_lower_first(i['why'])}).")
     for i in unsure:
         out.append(f"   NOT SURE   {i['source']}: {i['what']} ({_lower_first(i['why'])}).")
     for i in notes:

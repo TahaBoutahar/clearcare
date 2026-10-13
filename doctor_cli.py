@@ -85,7 +85,7 @@ def warn(text: str) -> str:
 
 def _print_lines(lines: list[str]) -> None:
     for line in lines:
-        if line.lstrip().startswith(("Sorry", "CHECK BEFORE", "NOT SURE")):
+        if line.lstrip().startswith(("Sorry", "CHECK BEFORE", "NOT SURE", "HIGH RISK")):
             print(warn(line))
         elif line.lstrip().startswith(("CORRECTED", "PRIVACY")):
             print(dim(line))
@@ -242,7 +242,7 @@ def doctor_review(result: dict) -> None:
         print(bold("\nDoctor: is this correct for the patient?") +
               dim("  [y] approve and give it  ·  [e] edit it  ·  [n] do not give it"))
         if unsure:
-            print(warn("   Some things above are not certain. Fix them with [e], or type \"yes\" in full to approve anyway."))
+            print(warn("   Something above is uncertain or high-risk. Check it, fix it with [e], or type \"yes\" in full to approve."))
         try:
             answer = input("> ").strip().lower()
         except EOFError:
