@@ -57,6 +57,7 @@ _FIELD_MAP = {  # benchmark name -> pipeline field
 _UNITS = [
     ("tablet", r"tablet|comprim|\bcp\b|\btab"), ("capsule", r"capsule|g[ée]l|\bcap"), ("sachet", r"sachet"),
     ("puff", r"puff|bouff"), ("lozenge", r"lozenge|pastille"), ("spoon", r"spoon|c\. ?[àa] ?s"), ("drop", r"drop|goutte"),
+    ("ml", r"\bml\b|millilit"),
 ]
 
 
@@ -72,9 +73,13 @@ def _quantity(value) -> tuple | None:
     if value is None:
         return None
     text = str(value).lower()
-    number = re.search(r"\d+(?:[.,]\d+)?", text)
+    if re.search(r"\b1\s*/\s*2\b|½|\bhalf\b|\bdemi", text):
+        number = "0.5"
+    else:
+        m = re.search(r"\d+(?:[.,]\d+)?", text)
+        number = m.group(0).replace(",", ".") if m else None
     unit = next((u for u, p in _UNITS if re.search(p, text)), None)
-    return (number.group(0).replace(",", ".") if number else None, unit)
+    return (number, unit)
 
 
 def _duration(value) -> str | None:
@@ -284,7 +289,7 @@ def summarize(results: list[dict]) -> dict:
 
 
 def run_benchmark(cases: list[dict], cold: bool = False,
-                  on_progress: Callable[[int, int, dict], None] | None = None) -> dict:
+                  on_progress: Callable[[int, int, dict], None] | None = None, dataset: str = CASES_FILE.name) -> dict:
     """Run all cases and return {"meta", "summary", "results"}; also saved to benchmark/results/."""
     if cold:  # empty cache: every "what it is for" lookup goes to the AI
         pipeline.DRUG_INFO_CACHE_PATH = Path(tempfile.mkdtemp()) / "drug_info.json"
@@ -300,20 +305,27 @@ def run_benchmark(cases: list[dict], cold: bool = False,
             "started": started.isoformat(timespec="seconds"),
             "duration_s": round((datetime.now() - started).total_seconds(), 1),
             "provider": pipeline.LLM_PROVIDER, "model": pipeline.LLM_MODEL, "cold_cache": cold,
-            "cases_file": CASES_FILE.name,
+            "cases_file": dataset,
         },
         "summary": summarize(results),
         "results": results,
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    path = RESULTS_DIR / f"{started:%Y%m%d_%H%M%S}_{pipeline.LLM_PROVIDER}{'_cold' if cold else ''}.json"
+    tag = Path(dataset).stem
+    path = RESULTS_DIR / f"{started:%Y%m%d_%H%M%S}_{pipeline.LLM_PROVIDER}_{tag}{'_cold' if cold else ''}.json"
     path.write_text(json.dumps(report, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     report["meta"]["file"] = path.name
     return report
 
 
 def load_cases(path: Path = CASES_FILE) -> list[dict]:
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def datasets() -> list[str]:
+    """Test sets available in benchmark/ (cases.jsonl first)."""
+    files = sorted(p.name for p in CASES_FILE.parent.glob("*.jsonl"))
+    return sorted(files, key=lambda f: f != CASES_FILE.name)
 
 
 def main() -> None:
@@ -323,6 +335,8 @@ def main() -> None:
     parser.add_argument("--limit", type=int, help="only run the first N cases")
     parser.add_argument("--case", action="append", help="only run this case id (repeatable)")
     parser.add_argument("--cold", action="store_true", help="start with an empty cache (worst-case speed)")
+    parser.add_argument("--cases", default=CASES_FILE.name,
+                        help="test set in benchmark/ (cases.jsonl, realworld.jsonl, random_seed7.jsonl, ...)")
     args = parser.parse_args()
 
     import logging
@@ -330,7 +344,7 @@ def main() -> None:
     if args.provider or args.model:
         pipeline.configure(provider=args.provider, model=args.model)
 
-    cases = load_cases()
+    cases = load_cases(CASES_FILE.parent / args.cases)
     if args.case:
         cases = [c for c in cases if c["id"] in args.case]
     if args.limit:
@@ -341,8 +355,8 @@ def main() -> None:
         status = "PASS" if not failed else f"FAIL ({len(failed)}): " + "; ".join(failed[:3])
         print(f"[{i}/{n}] {r['id']:<24} {r['time_total']:>5.1f}s  {status}", flush=True)
 
-    print(f"Benchmark · {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL} · {len(cases)} cases\n", flush=True)
-    report = run_benchmark(cases, cold=args.cold, on_progress=progress)
+    print(f"Benchmark · {args.cases} · {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL} · {len(cases)} cases\n", flush=True)
+    report = run_benchmark(cases, cold=args.cold, on_progress=progress, dataset=args.cases)
     s = report["summary"]
     print(f"\nChecks passed:        {s['checks']['passed']}/{s['checks']['total']} ({s['checks']['rate']:.0%})")
     print(f"Cases fully correct:  {s['cases_fully_correct']}/{s['cases']}")
