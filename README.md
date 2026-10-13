@@ -45,7 +45,7 @@ Providers: `amd` (AMD Developer Cloud, `amd/DeepSeek-V4-Flash`), `ollama` (local
 
 Each run scores field accuracy, medicines found or invented, illness, review flags, privacy
 leaks, numbers that are not on the prescription, speed and reading level, and is saved in
-`benchmark/results/`. The **AMD Full stack** dashboard shows and compares the runs.
+`benchmark/results/`. The dashboard in [`AMD Full stack/`](AMD%20Full%20stack) shows and compares the runs.
 
 ## Roadmap: translation for multi-country use
 
@@ -71,5 +71,7 @@ Arabic dialects**, so the same tool works for patients across several countries:
 | `privacy.py` | Local removal of personal details |
 | `doctor_cli.py` | Terminal tool for doctors, with review and approval |
 | `benchmark/` | Test sets, random generator and scorer |
+| `AMD Full stack/` | Web dashboard: benchmark results, live runs, try-it (`./run.sh`, then http://localhost:8000) |
+| `docs/screenshots/` | Screenshots of the dashboard |
 | `examples/` | Example prescriptions |
 | `data/` | Sample data and dataset notes |

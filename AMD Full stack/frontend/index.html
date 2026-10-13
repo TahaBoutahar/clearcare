@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explainer and Translator</title>
+  <link rel="stylesheet" href="/static/styles.css?v=4">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Prescription Explainer and Translator</h1>
+      <p class="sub">AMD Full stack · what the pipeline does, and how well</p>
+    </div>
+    <div id="config" class="badge">loading…</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-tab="cases">Cases</button>
+    <button role="tab" data-tab="run">Run benchmark</button>
+    <button role="tab" data-tab="try">Try it</button>
+  </nav>
+
+  <main>
+    <!-- Overview -->
+    <section id="tab-overview" class="tab">
+      <div class="row">
+        <label>Run <select id="run-select"></select></label>
+        <span id="run-meta" class="muted"></span>
+      </div>
+      <div id="empty" class="card hidden">No benchmark run yet. Start one in <b>Run benchmark</b>.</div>
+      <div id="overview">
+        <div id="tiles" class="tiles"></div>
+        <div class="grid2">
+          <div class="card"><h2>Accuracy by field</h2><p class="muted small">Each field the pipeline reads from the prescription, against the correct answer.</p><div id="chart-fields" class="bars"></div></div>
+          <div class="card"><h2>Checks by area</h2><p class="muted small">Every check in the benchmark, grouped by what it protects.</p><div id="chart-groups" class="bars"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h2>Time per case</h2><p class="muted small">Seconds until the full explanation is ready. Hover for time until the dosing is shown.</p><div id="chart-time" class="bars"></div></div>
+          <div class="card"><h2>By kind of prescription</h2><div id="table-categories"></div></div>
+        </div>
+        <div class="card"><h2>All runs</h2><p class="muted small">Compare runs over time or across providers.</p><div id="table-history"></div></div>
+      </div>
+    </section>
+
+    <!-- Cases -->
+    <section id="tab-cases" class="tab hidden">
+      <div class="row">
+        <label><input type="checkbox" id="only-failed"> Only cases with a failed check</label>
+      </div>
+      <div id="cases-table"></div>
+    </section>
+
+    <!-- Run -->
+    <section id="tab-run" class="tab hidden">
+      <div class="card">
+        <h2>Run the benchmark</h2>
+        <div class="row wrap">
+          <label>Test set <select id="run-dataset"></select></label>
+          <label>Provider <select id="run-provider"></select></label>
+          <label><input type="checkbox" id="run-cold"> Empty cache (worst-case speed)</label>
+          <label>Only first <input type="number" id="run-limit" min="1" placeholder="all"> cases</label>
+          <button id="run-start" class="primary">Start</button>
+        </div>
+        <p id="run-error" class="error hidden"></p>
+      </div>
+      <div id="run-progress" class="card hidden">
+        <div class="row"><b id="run-count"></b><span id="run-eta" class="muted"></span></div>
+        <div class="progress"><div id="run-bar"></div></div>
+        <ol id="run-cases" class="run-cases"></ol>
+        <p id="run-done" class="hidden"></p>
+      </div>
+    </section>
+
+    <!-- Try it -->
+    <section id="tab-try" class="tab hidden">
+      <div class="card">
+        <h2>Explain one prescription</h2>
+        <div class="row wrap">
+          <span class="muted small">Examples:</span>
+          <button class="chip" data-example="angine">Throat infection</button>
+          <button class="chip" data-example="diabetes">Diabetes + blood pressure</button>
+          <button class="chip" data-example="personal">With personal details</button>
+          <button class="chip" data-example="unclear">Unclear dose</button>
+        </div>
+        <textarea id="try-input" rows="7" placeholder="Paste a prescription…"></textarea>
+        <div class="row">
+          <label>Provider <select id="try-provider"></select></label>
+          <button id="try-go" class="primary">Explain</button>
+          <span id="try-status" class="muted"></span>
+        </div>
+      </div>
+      <div id="try-out" class="hidden">
+        <div class="tiles" id="try-tiles"></div>
+        <div class="grid2">
+          <div class="card"><h2>Sent to the AI</h2><p id="try-removed" class="muted small"></p><pre id="try-sent"></pre></div>
+          <div class="card"><h2>For the doctor</h2><pre id="try-review" class="review"></pre></div>
+        </div>
+        <div class="card"><h2>For the patient</h2><pre id="try-patient"></pre></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip hidden" role="tooltip"></div>
+  <script src="/static/app.js?v=4"></script>
+</body>
+</html>
