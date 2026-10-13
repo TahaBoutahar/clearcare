@@ -1,4 +1,4 @@
-# Prescription Explainer
+# Prescription Explainer and Translator
 
 AMD Developer Hackathon ACT III — Health and Wellbeing track.
 
@@ -34,6 +34,35 @@ rx -p ollama          # free local model; default provider is set in .env
 
 Providers: `amd` (AMD Developer Cloud, `amd/DeepSeek-V4-Flash`), `ollama` (local), `openrouter`.
 
+## Measuring it
+
+```bash
+.venv/bin/python -m benchmark.run --cases cases.jsonl        # core set (25 cases)
+.venv/bin/python -m benchmark.run --cases realworld.jsonl    # messy real-world prescriptions (24)
+.venv/bin/python -m benchmark.generate --seed 7 -n 40         # random prescriptions with exact answers
+.venv/bin/python -m benchmark.run --cases random_seed7.jsonl
+```
+
+Each run scores field accuracy, medicines found or invented, illness, review flags, privacy
+leaks, numbers that are not on the prescription, speed and reading level, and is saved in
+`benchmark/results/`. The **AMD Full stack** dashboard shows and compares the runs.
+
+## Roadmap: translation for multi-country use
+
+The explanation will be available in **at least 7 languages plus Moroccan Darija and other
+Arabic dialects**, so the same tool works for patients across several countries:
+
+- **Languages:** English, French, Modern Standard Arabic, Spanish, Portuguese, German, Italian
+  (more as needed, e.g. Turkish).
+- **Darija and dialects:** Moroccan Darija first, then Algerian, Tunisian, Egyptian, Levantine
+  and Gulf Arabic; Tamazight (Amazigh) is being considered.
+- **Safe by design:** the sentences that carry doses ("Take 1 tablet in the morning and in the
+  evening, for 8 days") are built from fixed templates, so each template is translated once and
+  checked by a native-speaking health professional. The AI never re-words a dose; only medicine
+  names, the illness and the doctor's own instructions need translating, and those go through the
+  same checks (numbers must match the prescription) and the doctor's approval.
+- **Spoken version:** an audio reading of the translated text for patients who cannot read.
+
 ## Files
 
 | File | What it does |
@@ -41,5 +70,6 @@ Providers: `amd` (AMD Developer Cloud, `amd/DeepSeek-V4-Flash`), `ollama` (local
 | `ai_pipeline.py` | The pipeline: extraction, checks, rendering, `process_prescription()` / `stream_prescription()` |
 | `privacy.py` | Local removal of personal details |
 | `doctor_cli.py` | Terminal tool for doctors, with review and approval |
+| `benchmark/` | Test sets, random generator and scorer |
 | `examples/` | Example prescriptions |
 | `data/` | Sample data and dataset notes |
