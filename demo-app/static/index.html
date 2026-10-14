@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Rx Explainer">
+  <meta name="theme-color" content="#2a78d6">
+  <link rel="apple-touch-icon" href="/static/icon-180.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Rx Explainer</title>
+  <link rel="stylesheet" href="/static/styles.css?v=2">
+</head>
+<body>
+  <header class="bar">
+    <button id="nav-new" class="bar-btn" aria-label="New prescription">＋ New</button>
+    <div class="bar-title">Rx Explainer <span class="demo">demo</span></div>
+    <div class="bar-right">
+      <button id="nav-stats" class="bar-btn" aria-label="Pilot numbers">Stats</button>
+      <button id="nav-settings" class="bar-btn" aria-label="Settings">⚙︎</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- PIN -->
+    <section id="screen-pin" class="screen hidden">
+      <h1>Enter the PIN</h1>
+      <p class="muted">This demo is protected. Ask the person running it for the PIN.</p>
+      <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN">
+      <button id="pin-go" class="primary big">Continue</button>
+      <p id="pin-error" class="error hidden">Wrong PIN.</p>
+    </section>
+
+    <!-- New prescription -->
+    <section id="screen-new" class="screen">
+      <h1>Prescription</h1>
+      <p class="muted small">Type, paste or dictate. Do not include the patient's name: it is not needed.</p>
+      <textarea id="rx-input" rows="8" placeholder="Ex. Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas."></textarea>
+      <div class="row">
+        <button id="mic" class="secondary big" aria-pressed="false">🎙︎ Dictate</button>
+        <button id="example" class="link">Example</button>
+      </div>
+      <p id="mic-status" class="muted small hidden"></p>
+      <label class="field">Patient's language
+        <div class="seg" id="lang-new" role="radiogroup"></div>
+      </label>
+      <button id="explain" class="primary big">Explain</button>
+    </section>
+
+    <!-- Result -->
+    <section id="screen-result" class="screen hidden">
+      <p id="status" class="status"></p>
+      <div id="preview" class="sheet preview hidden"></div>
+
+      <div id="result" class="hidden">
+        <div class="seg" id="lang-result" role="radiogroup" aria-label="Patient's language"></div>
+        <p id="kept" class="muted small hidden"></p>
+        <div id="sheet" class="sheet"></div>
+
+        <details id="review-box" class="review" open>
+          <summary id="review-title">For the doctor</summary>
+          <div id="review"></div>
+        </details>
+
+        <label id="confirm-wrap" class="confirm hidden">
+          <input type="checkbox" id="confirm"> I checked the items marked HIGH RISK / NOT SURE
+        </label>
+
+        <div class="actions">
+          <button id="approve" class="primary big">✓ Approve</button>
+          <button id="edit" class="secondary big">Edit</button>
+          <button id="reject" class="danger big">Reject</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Edit -->
+    <section id="screen-edit" class="screen hidden">
+      <h1>Edit the patient sheet</h1>
+      <textarea id="edit-text" rows="16"></textarea>
+      <button id="edit-save" class="primary big">Save and approve</button>
+      <button id="edit-cancel" class="link">Cancel</button>
+    </section>
+
+    <!-- Reject -->
+    <section id="screen-reject" class="screen hidden">
+      <h1>Why is it wrong?</h1>
+      <p class="muted small">This helps measure the tool. Nothing is given to the patient.</p>
+      <div class="chips" id="reasons"></div>
+      <button id="reject-cancel" class="link">Back</button>
+    </section>
+
+    <!-- Approved -->
+    <section id="screen-done" class="screen hidden">
+      <p class="ok-banner">✓ Approved — ready for the patient</p>
+      <div id="final" class="sheet print-me"></div>
+      <div class="actions">
+        <button id="share" class="primary big">Share</button>
+        <button id="print" class="secondary big">Print</button>
+      </div>
+      <button id="again" class="link">New prescription</button>
+    </section>
+
+    <!-- Stats -->
+    <section id="screen-stats" class="screen hidden">
+      <h1>Pilot numbers</h1>
+      <p class="muted small">Decisions logged on this demo. No patient text is stored.</p>
+      <div id="stats" class="tiles"></div>
+      <div id="reasons-table"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="screen-settings" class="screen hidden">
+      <h1>Settings</h1>
+      <label class="field">Doctor code <span class="muted small">(anonymous, e.g. D01)</span>
+        <input id="doctor" type="text" autocomplete="off" placeholder="D01">
+      </label>
+      <label class="field">Default patient language
+        <div class="seg" id="lang-default" role="radiogroup"></div>
+      </label>
+      <label class="field">PIN
+        <input id="pin-setting" type="password" inputmode="numeric" autocomplete="off">
+      </label>
+      <button id="settings-save" class="primary big">Save</button>
+      <p id="about" class="muted small"></p>
+    </section>
+  </main>
+
+  <script src="/static/app.js?v=1"></script>
+</body>
+</html>
