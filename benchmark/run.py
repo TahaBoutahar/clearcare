@@ -181,7 +181,8 @@ def run_case(case: dict) -> dict:
               "a 'Sorry ... Why' message", result["error"] or "explained it anyway")
         return result
     if done is None:
-        check("refusal", "explains a real prescription", False, "an explanation", result["error"])
+        if not case.get("allow_error"):  # dialogue turns ("non", remarks) may be refused
+            check("refusal", "explains a real prescription", False, "an explanation", result["error"])
         return result
 
     output, structured = done["text"], done["prescription"]
@@ -196,8 +197,13 @@ def run_case(case: dict) -> dict:
     found = structured["medicines"]
     matched: set[int] = set()
     for exp in case.get("meds", []):
-        key = _letters(exp["name"])[:6]
-        idx = next((i for i, m in enumerate(found) if i not in matched and _letters(m["name_as_written"]).startswith(key[:5])), None)
+        if exp["name"] is None:  # dose spoken without the drug's name: take the first medicine found
+            idx = next((i for i in range(len(found)) if i not in matched), None)
+            exp = {**exp, "name": "(unnamed)"}
+        else:
+            key = _letters(exp["name"])[:6]
+            idx = next((i for i, m in enumerate(found)
+                        if i not in matched and _letters(m["name_as_written"]).startswith(key[:5])), None)
         check("medicines", f"{exp['name']}: found", idx is not None, exp["name"],
               found[idx]["name_as_written"] if idx is not None else "missing")
         if idx is None:
@@ -289,10 +295,13 @@ def summarize(results: list[dict]) -> dict:
 
 
 def run_benchmark(cases: list[dict], cold: bool = False,
-                  on_progress: Callable[[int, int, dict], None] | None = None, dataset: str = CASES_FILE.name) -> dict:
+                  on_progress: Callable[[int, int, dict], None] | None = None, dataset: str = CASES_FILE.name,
+                  no_purpose: bool = False) -> dict:
     """Run all cases and return {"meta", "summary", "results"}; also saved to benchmark/results/."""
     if cold:  # empty cache: every "what it is for" lookup goes to the AI
         pipeline.DRUG_INFO_CACHE_PATH = Path(tempfile.mkdtemp()) / "drug_info.json"
+    if no_purpose:  # the "what it is for" line is not scored; skipping it makes big runs faster
+        pipeline._fetch_drug_purpose = lambda med: None
     started = datetime.now()
     results = []
     for i, case in enumerate(cases, 1):
@@ -304,7 +313,7 @@ def run_benchmark(cases: list[dict], cold: bool = False,
         "meta": {
             "started": started.isoformat(timespec="seconds"),
             "duration_s": round((datetime.now() - started).total_seconds(), 1),
-            "provider": pipeline.LLM_PROVIDER, "model": pipeline.LLM_MODEL, "cold_cache": cold,
+            "provider": pipeline.LLM_PROVIDER, "model": pipeline.LLM_MODEL, "cold_cache": cold, "no_purpose": no_purpose,
             "cases_file": dataset,
         },
         "summary": summarize(results),
@@ -335,6 +344,7 @@ def main() -> None:
     parser.add_argument("--limit", type=int, help="only run the first N cases")
     parser.add_argument("--case", action="append", help="only run this case id (repeatable)")
     parser.add_argument("--cold", action="store_true", help="start with an empty cache (worst-case speed)")
+    parser.add_argument("--no-purpose", action="store_true", help="skip the 'what it is for' lookup (not scored; faster)")
     parser.add_argument("--cases", default=CASES_FILE.name,
                         help="test set in benchmark/ (cases.jsonl, realworld.jsonl, random_seed7.jsonl, ...)")
     args = parser.parse_args()
@@ -356,7 +366,7 @@ def main() -> None:
         print(f"[{i}/{n}] {r['id']:<24} {r['time_total']:>5.1f}s  {status}", flush=True)
 
     print(f"Benchmark · {args.cases} · {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL} · {len(cases)} cases\n", flush=True)
-    report = run_benchmark(cases, cold=args.cold, on_progress=progress, dataset=args.cases)
+    report = run_benchmark(cases, cold=args.cold, on_progress=progress, dataset=args.cases, no_purpose=args.no_purpose)
     s = report["summary"]
     print(f"\nChecks passed:        {s['checks']['passed']}/{s['checks']['total']} ({s['checks']['rate']:.0%})")
     print(f"Cases fully correct:  {s['cases_fully_correct']}/{s['cases']}")

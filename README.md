@@ -41,7 +41,13 @@ Providers: `amd` (AMD Developer Cloud, `amd/DeepSeek-V4-Flash`), `ollama` (local
 .venv/bin/python -m benchmark.run --cases realworld.jsonl    # messy real-world prescriptions (24)
 .venv/bin/python -m benchmark.generate --seed 7 -n 40         # random prescriptions with exact answers
 .venv/bin/python -m benchmark.run --cases random_seed7.jsonl
+.venv/bin/python -m benchmark.run --cases pxcorpus.jsonl --no-purpose   # 1,981 real spoken prescriptions
 ```
+
+`pxcorpus.jsonl` is built by `benchmark/pxcorpus.py` from **PxCorpus** (Kocabiyikoglu et al., LREC 2022,
+[Zenodo](https://zenodo.org/records/6482587), CC BY 4.0): real French drug prescriptions dictated by doctors,
+medical practitioners and non-experts, with human annotations. The model only receives the transcript; the
+annotations are used by the scorer alone.
 
 Each run scores field accuracy, medicines found or invented, illness, review flags, privacy
 leaks, numbers that are not on the prescription, speed and reading level, and is saved in
