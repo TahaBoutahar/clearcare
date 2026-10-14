@@ -2,14 +2,14 @@
 translator.py — the patient explanation in English, French or Arabic.
 
 Safe by design:
-    - Everything that carries a dose (amount, times, food, duration, limits, schedule) is built
-      from fixed sentence templates in each language. The AI never re-words a dose.
-    - Only short free-text parts are translated by the AI: what each medicine is for, the illness,
-      the doctor's own instructions, "when needed" reasons and apologies. Each translation must
-      contain exactly the same numbers as the English; otherwise the English is kept and marked.
+    - Everything that carries a dose (amount, times, food, duration, limits) is built from fixed
+      sentence templates in each language. The AI never re-words a dose.
+    - Only short free text is translated by the AI: what each medicine is for, the illness, the
+      doctor's own instructions, "when needed" reasons and apologies. A translation must contain
+      exactly the same numbers as the English; otherwise the English is kept and reported.
     - Medicine names are never translated.
 
-The templates should be checked once by a native-speaking health professional before real use.
+The templates must be checked once by a native-speaking health professional before real use.
 """
 
 from __future__ import annotations
@@ -23,30 +23,54 @@ import ai_pipeline as pipeline
 
 LANGUAGES = {"en": "English", "fr": "Français", "ar": "العربية"}
 RTL = {"ar"}
+TTS_LANG = {"en": "english", "fr": "french", "ar": "arabic"}
 
 CACHE_PATH = Path(__file__).resolve().parent / "data" / "translations.json"
 _cache_lock = threading.Lock()
 
+
+def _de(name: str) -> str:
+    return f"d'{name}" if re.match(r"[aeiouyhAEIOUYHÉéÈè]", name) else f"de {name}"
+
+
+def _ar_dose(n: str, form: tuple, name: str, one: str, of: str) -> str:
+    """Arabic: "one pill" and "two pills" are said differently from 3+."""
+    singular, plural, dual = form
+    if n == "1":
+        return f"{singular} {one} {of} {name}"
+    if n == "2":
+        return f"{dual} {of} {name}"
+    return f"{n} {plural} {of} {name}"
+
+
+
 # --------------------------------------------------------------------------- #
-# Fixed templates
+# Fixed templates (dose sentences and labels)
 # --------------------------------------------------------------------------- #
 
-T = {
+T: dict[str, dict] = {
+    "en": {
+        "Your illness": "Your illness", "Your medicines": "Your medicines", "Also": "Also",
+        "When to take them each day": "When to take them each day",
+        "Sorry, I could not understand everything": "Sorry, I could not understand everything",
+        "intro": "Here is how to take your medicines.",
+        "disclaimer": "If you are not sure about anything, ask your doctor or pharmacist.",
+        "ask_about_this": "Please ask your doctor or pharmacist about this.",
+        "slot": {"morning": "Morning", "noon": "Noon", "evening": "Evening", "bedtime": "Bedtime"},
+        "if_needed_slot": "Only if needed",
+        "checked": lambda date: f"Checked by your doctor on {date}.",
+    },
     "fr": {
-        "Your illness": "Votre maladie",
-        "Your medicines": "Vos médicaments",
-        "What they are for": "À quoi ils servent",
+        "Your illness": "Votre maladie", "Your medicines": "Vos médicaments", "Also": "Aussi",
         "When to take them each day": "Quand les prendre chaque jour",
-        "Your doctor also says": "Votre médecin dit aussi",
         "Sorry, I could not understand everything": "Désolé, je n'ai pas tout compris",
-        "you_have": lambda n: f"Vous avez {n} médicament{'s' if n > 1 else ''}.",
+        "intro": "Voici comment prendre vos médicaments.",
         "disclaimer": "Si vous avez un doute, demandez à votre médecin ou à votre pharmacien.",
         "ask_about_this": "Demandez à votre médecin ou à votre pharmacien.",
         "take": "Prenez", "take_it": "Prenez-le",
         "time": {"morning": "le matin", "noon": "à midi", "evening": "le soir", "bedtime": "au coucher"},
         "slot": {"morning": "Matin", "noon": "Midi", "evening": "Soir", "bedtime": "Coucher"},
-        "if_needed_slot": "Seulement si besoin",
-        "and": "et", "or": "ou",
+        "if_needed_slot": "Seulement si besoin", "and": "et",
         "once_a_day": "une fois par jour", "n_a_day": lambda n: f"{n} fois par jour",
         "once_a_week": "une fois par semaine", "n_a_week": lambda n: f"{n} fois par semaine",
         "on_day": lambda d: f"le {d}",
@@ -64,24 +88,20 @@ T = {
         "forms": {"pill": ("comprimé", "comprimés"), "sachet": ("sachet", "sachets"), "puff": ("bouffée", "bouffées"),
                   "drop": ("goutte", "gouttes"), "lozenge": ("pastille", "pastilles"), "ml": ("ml", "ml"),
                   "spoon": ("cuillère", "cuillères")},
-        "dose": lambda n, form, name: f"{n} {form} {_de(name)}",
+        "dose": lambda n, form, name: f"{n} {form[0] if n in ('1', '1/2', '½') else form[1]} {_de(name)}",
         "checked": lambda date: f"Vérifié par votre médecin le {date}.",
     },
     "ar": {
-        "Your illness": "مرضك",
-        "Your medicines": "أدويتك",
-        "What they are for": "فيم تستعمل",
+        "Your illness": "مرضك", "Your medicines": "أدويتك", "Also": "أيضا",
         "When to take them each day": "متى تأخذها كل يوم",
-        "Your doctor also says": "يقول طبيبك أيضا",
         "Sorry, I could not understand everything": "عذرا، لم أفهم كل شيء",
-        "you_have": lambda n: "لديك دواء واحد." if n == 1 else ("لديك دواءان." if n == 2 else f"لديك {n} أدوية."),
+        "intro": "إليك كيف تأخذ أدويتك.",
         "disclaimer": "إذا كان لديك أي شك، اسأل طبيبك أو الصيدلي.",
         "ask_about_this": "اسأل طبيبك أو الصيدلي.",
         "take": "خذ", "take_it": "خذه",
         "time": {"morning": "في الصباح", "noon": "عند الظهر", "evening": "في المساء", "bedtime": "قبل النوم"},
         "slot": {"morning": "الصباح", "noon": "الظهر", "evening": "المساء", "bedtime": "قبل النوم"},
-        "if_needed_slot": "عند الحاجة فقط",
-        "and": "و", "or": "أو",
+        "if_needed_slot": "عند الحاجة فقط", "and": "و",
         "once_a_day": "مرة واحدة في اليوم", "n_a_day": lambda n: "مرتين في اليوم" if n == 2 else f"{n} مرات في اليوم",
         "once_a_week": "مرة واحدة في الأسبوع", "n_a_week": lambda n: f"{n} مرات في الأسبوع",
         "on_day": lambda d: f"يوم {d}",
@@ -96,48 +116,56 @@ T = {
         "wait_hours": lambda h: f"انتظر {h} ساعات على الأقل قبل أن تأخذه مرة أخرى.",
         "max_day": lambda m: f"لا تأخذ أكثر من {m} في اليوم.",
         "long_term": "هذا علاج طويل المدى.",
-        "forms": {"pill": ("قرص", "أقراص"), "sachet": ("كيس", "أكياس"), "puff": ("بخة", "بخات"),
-                  "drop": ("قطرة", "قطرات"), "lozenge": ("قرص للمص", "أقراص للمص"), "ml": ("مل", "مل"),
-                  "spoon": ("ملعقة", "ملاعق")},
-        "dose": lambda n, form, name: (f"{form} واحد من {name}" if n == "1" else
-                                       f"{_AR_DUAL.get(form, '2 ' + form)} من {name}" if n == "2" else f"{n} {form} من {name}"),
+        "forms": {"pill": ("قرص", "أقراص", "قرصين"), "sachet": ("كيس", "أكياس", "كيسين"), "puff": ("بخة", "بخات", "بختين"),
+                  "drop": ("قطرة", "قطرات", "قطرتين"), "lozenge": ("قرص للمص", "أقراص للمص", "قرصين للمص"),
+                  "ml": ("مل", "مل", "2 مل"), "spoon": ("ملعقة", "ملاعق", "ملعقتين")},
+        "dose": lambda n, form, name: _ar_dose(n, form, name, "واحد", "من"),
         "checked": lambda date: f"راجعه طبيبك بتاريخ {date}.",
     },
 }
-
-# Arabic dual ("two pills" is one word); used for the amount 2.
-_AR_DUAL = {"أقراص": "قرصين", "أكياس": "كيسين", "بخات": "بختين", "قطرات": "قطرتين", "ملاعق": "ملعقتين", "أقراص للمص": "قرصين للمص"}
 
 _FORM_WORDS = [("pill", r"tablet|capsule|pill|tab|cap|comprim|g[ée]l"), ("sachet", r"sachet"), ("puff", r"puff|bouff"),
                ("drop", r"drop|goutte"), ("lozenge", r"lozenge|pastille"), ("ml", r"\bml\b"), ("spoon", r"spoon|cuill")]
 
 
-def _de(name: str) -> str:
-    return f"d'{name}" if re.match(r"[aeiouyhAEIOUYHÉéÈè]", name) else f"de {name}"
+def _sep(lang: str) -> str:
+    return "، " if lang in RTL else ", "
 
 
 def _join(items: list[str], word: str, lang: str) -> str:
     if len(items) == 1:
         return items[0]
-    if lang == "ar":
+    if lang in RTL:
         return "، ".join(items[:-1]) + f" {word}" + items[-1]
     return ", ".join(items[:-1]) + f" {word} " + items[-1]
 
 
-def _quantity(amount: str, lang: str) -> tuple[str, str] | None:
-    """"2 tablets" -> ("2", "comprimés"); None when the amount cannot be templated."""
+def _quantity(amount: str | None):
+    """"2 tablets" -> ("2", "pill"); None when the amount cannot be templated."""
     m = re.match(r"^\s*(\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|½)\s+(.+)$", amount or "")
     if not m:
         return None
-    number, unit_text = m.group(1).replace(" ", ""), m.group(2).lower()
-    form = next((f for f, pattern in _FORM_WORDS if re.search(pattern, unit_text)), None)
-    if not form:
+    form = next((f for f, pattern in _FORM_WORDS if re.search(pattern, m.group(2).lower())), None)
+    return (m.group(1).replace(" ", ""), form) if form else None
+
+
+def _forms(lang: str, form: str) -> tuple:
+    f = T[lang]["forms"][form]
+    return f if len(f) == 3 else (f[0], f[1], f[1])
+
+
+def _amount_text(amount: str | None, lang: str) -> str | None:
+    """"3 tablets" -> "3 comprimés" (limits and the daily schedule)."""
+    if lang == "en":
+        return pipeline._pills(amount) if amount else None
+    q = _quantity(amount)
+    if not q:
         return None
-    singular, plural = T[lang]["forms"][form]
-    one = number in ("1", "1/2", "½") or number.startswith("0")
-    if lang == "ar" and number == "2":
-        return number, plural  # Arabic dual is close enough for a reviewed demo
-    return number, singular if one else plural
+    n, form = q
+    singular, plural, dual = _forms(lang, form)
+    if lang in RTL and n == "2":
+        return dual
+    return f"{n} {singular if n in ('1', '1/2', '½') else plural}"
 
 
 def _duration(duration: str, lang: str) -> str | None:
@@ -155,7 +183,7 @@ def _duration(duration: str, lang: str) -> str | None:
 
 _PROMPT = """You translate short patient-facing medical sentences from English to {language}.
 Rules:
-- Simple, everyday words for a patient who may not read well.{dialect}
+- Simple, everyday words for a patient who may not read well.
 - Keep every number exactly as written. Keep medicine names exactly as written (do not translate them).
 - Do not add or remove information. Do not add advice.
 Return compact JSON only: {{"translations": [one translation per input sentence, same order]}}"""
@@ -181,7 +209,7 @@ def translate_phrases(phrases: list[str], lang: str) -> tuple[dict[str, str], li
     todo = [p for p in phrases if key(p) not in cache]
     if todo:
         try:
-            raw = pipeline._chat(_PROMPT.format(language=_LANGUAGE_NAMES[lang], dialect=""),
+            raw = pipeline._chat(_PROMPT.format(language=_LANGUAGE_NAMES[lang]),
                                  json.dumps({"sentences": todo}, ensure_ascii=False), max_tokens=1500, json_mode=True)
             got = pipeline._as_list(pipeline._parse_json_object(raw).get("translations"))
         except Exception:  # model unreachable or unreadable answer: keep English
@@ -206,28 +234,39 @@ def translate_phrases(phrases: list[str], lang: str) -> tuple[dict[str, str], li
 
 
 # --------------------------------------------------------------------------- #
-# Rendering in French / Arabic (English uses the pipeline's own renderer)
+# Building the patient sheet
 # --------------------------------------------------------------------------- #
 
+def _issue_line(issue: dict) -> str:
+    what = issue["what"][:1].upper() + issue["what"][1:]
+    return f"{what}: {pipeline._lower_first(issue['why'])}."
+
+
 def _how_sentences(med: dict, lang: str, tr: dict) -> list[str]:
+    if lang == "en":
+        return pipeline._how_sentences(med)
     t = T[lang]
     name = pipeline.short_name(med)
-    q = _quantity(med.get("amount_per_dose"), lang) if med.get("amount_per_dose") else None
-    first = f"{t['take']} {t['dose'](q[0], q[1], name)}" if q else (
-        f"{t['take']} {tr[med['amount_per_dose']]}" if med.get("amount_per_dose") else t["take_it"])
+    q = _quantity(med.get("amount_per_dose"))
+    if q:
+        first = f"{t['take']} {t['dose'](q[0], _forms(lang, q[1]), name)}"
+    elif med.get("amount_per_dose"):
+        first = f"{t['take']} {tr.get(med['amount_per_dose'], med['amount_per_dose'])}"
+    else:
+        first = t["take_it"]
 
     if med["only_when_needed"]:
         need = med.get("needed_for")
         first += " " + (t["only_when"](tr.get(need, need)) if need else t["only_when_needed"])
         if med.get("times_per_day"):
-            first += ("، " if lang == "ar" else ", ") + t["up_to"](med["times_per_day"])
+            first += _sep(lang) + t["up_to"](med["times_per_day"])
     elif med.get("times_of_day"):
         first += " " + _join([t["time"][m] for m in med["times_of_day"]], t["and"], lang)
     elif med.get("times_per_week"):
         w = med["times_per_week"]
         first += " " + (t["once_a_week"] if w == 1 else t["n_a_week"](w))
         if med.get("weekday"):
-            first += ("، " if lang == "ar" else ", ") + t["on_day"](t["days"].get(med["weekday"], med["weekday"]))
+            first += _sep(lang) + t["on_day"](t["days"].get(med["weekday"], med["weekday"]))
     elif med.get("times_per_day"):
         n = med["times_per_day"]
         first += " " + (t["once_a_day"] if n == 1 else t["n_a_day"](n))
@@ -238,96 +277,103 @@ def _how_sentences(med: dict, lang: str, tr: dict) -> list[str]:
     long_term = bool(med.get("duration")) and "long" in med["duration"].lower()
     if med.get("duration") and not long_term:
         extras.append(t["for_duration"](_duration(med["duration"], lang) or tr.get(med["duration"], med["duration"])))
-    sep = "، " if lang == "ar" else ", "
-    sentences = [] if first == t["take_it"] and not extras else [sep.join([first, *extras]) + "."]
+    sentences = [] if first == t["take_it"] and not extras else [_sep(lang).join([first, *extras]) + "."]
 
     if med.get("route") and med["route"].lower() not in ("by mouth", "oral", "orally", "po"):
         sentences.append(tr.get(med["route"], med["route"]).rstrip(".") + ".")
     if med.get("every_hours"):
         sentences.append(t["wait_hours"](med["every_hours"]))
     if med.get("max_per_day"):
-        q = _quantity(med["max_per_day"], lang)
-        sentences.append(t["max_day"](f"{q[0]} {q[1]}" if q else tr.get(med["max_per_day"], med["max_per_day"])))
+        sentences.append(t["max_day"](_amount_text(med["max_per_day"], lang) or tr.get(med["max_per_day"], med["max_per_day"])))
     if long_term:
         sentences.append(t["long_term"])
     return sentences
 
 
 def _free_text(extraction: dict) -> list[str]:
-    """Every English phrase that needs the AI to translate it."""
-    phrases = []
-    for c in extraction.get("conditions", []):
-        phrases.append(pipeline._sentence(c))
+    """Every English phrase the AI must translate."""
+    phrases = [pipeline._sentence(c) for c in extraction.get("conditions", [])]
     for med in extraction["medicines"]:
-        phrases += pipeline._purpose_sentences(med) + pipeline._sorry_sentences(med)
-        for field in ("needed_for", "route"):
+        if med.get("purpose"):
+            phrases.append(med["purpose"])
+        phrases += pipeline._sorry_sentences(med)
+        for field in ("needed_for", "route", "duration"):
             if med.get(field):
                 phrases.append(med[field])
-        if med.get("amount_per_dose") and not _quantity(med["amount_per_dose"], "fr"):
-            phrases.append(med["amount_per_dose"])
-        if med.get("max_per_day") and not _quantity(med["max_per_day"], "fr"):
-            phrases.append(med["max_per_day"])
+        for field in ("amount_per_dose", "max_per_day"):
+            if med.get(field) and not _quantity(med[field]):
+                phrases.append(med[field])
     for line in extraction["doctor_instructions"] + ([extraction["follow_up"]] if extraction["follow_up"] else []):
         phrases.append(pipeline._sentence(line))
-    for i in extraction.get("issues", []):
-        if i["level"] == "unsure":
-            phrases.append(_issue_line(i))
+    phrases += [_issue_line(i) for i in extraction.get("issues", []) if i["level"] == "unsure"]
     return phrases
 
 
-def _issue_line(issue: dict) -> str:
-    """The English line for something on the prescription we could not understand."""
-    what = issue["what"][:1].upper() + issue["what"][1:]
-    return f"{what}: {pipeline._lower_first(issue['why'])}."
-
-
 def render(extraction: dict, lang: str) -> dict:
-    """{"text", "lang", "rtl", "kept_in_english": [...]} for the patient sheet in `lang`."""
+    """The patient sheet in `lang`, as cards (for the screen) and as plain text (to share, print, speak).
+
+    {"lang", "rtl", "illness": [..], "intro", "cards": [{"n", "name", "tag", "lines", "sorry", "doubt", "risk"}],
+     "schedule": [..], "also": [..], "unclear": [..], "labels": {..}, "disclaimer", "text", "kept_in_english": [..]}
+    """
     if lang not in LANGUAGES:
         lang = "en"
-    if lang == "en":
-        return {"text": pipeline.render_explanation(extraction), "lang": "en", "rtl": False, "kept_in_english": []}
-
     t = T[lang]
     tr, kept = translate_phrases(_free_text(extraction), lang)
-    out: list[str] = []
 
-    if extraction.get("conditions"):
-        out += [t["Your illness"], *(f"   {tr[pipeline._sentence(c)]}" for c in extraction["conditions"]), ""]
+    illness = [tr[pipeline._sentence(c)] for c in extraction.get("conditions", [])]
+    cards = []
+    for n, med in enumerate(extraction["medicines"], 1):
+        sorry = pipeline._sorry_sentences(med)
+        cards.append({
+            "n": n, "name": med["name_as_written"],
+            "tag": tr.get(med["purpose"], med["purpose"]).rstrip(".") if med.get("purpose") else "",
+            "lines": _how_sentences(med, lang, tr),
+            "sorry": tr[sorry[0]] if sorry else "",
+            "doubt": bool(sorry), "risk": any(i["level"] == "risk" for i in med.get("issues", [])),
+        })
 
+    schedule = []
     meds = extraction["medicines"]
-    if meds:
-        out += [t["Your medicines"], t["you_have"](len(meds)), ""]
-    for n, med in enumerate(meds, 1):
-        body = [tr[s] for s in pipeline._purpose_sentences(med)]
-        body += _how_sentences(med, lang, tr)
-        body += [tr[s] for s in pipeline._sorry_sentences(med)]
-        out += [f"{n}. {med['name_as_written']}", *(f"   {s}" for s in body), ""]
-
     regular = [m for m in meds if not m["only_when_needed"]]
     if regular and all(m.get("times_of_day") for m in regular):
-        out.append(t["When to take them each day"])
         for slot in pipeline._TIME_ORDER:
             items = []
             for m in regular:
                 if slot in m["times_of_day"]:
-                    q = _quantity(m.get("amount_per_dose"), lang) if m.get("amount_per_dose") else None
-                    items.append(m["name_as_written"] + (f" ({q[0]} {q[1]})" if q else ""))
+                    amount = _amount_text(m.get("amount_per_dose"), lang)
+                    items.append(m["name_as_written"] + (f" ({amount})" if amount else ""))
             if items:
-                out.append(f"   {t['slot'][slot]}: " + ("، " if lang == "ar" else ", ").join(items))
+                schedule.append(f"{t['slot'][slot]}: " + _sep(lang).join(items))
         if needed := [m["name_as_written"] for m in meds if m["only_when_needed"]]:
-            out.append(f"   {t['if_needed_slot']}: " + ("، " if lang == "ar" else ", ").join(needed))
-        out.append("")
+            schedule.append(f"{t['if_needed_slot']}: " + _sep(lang).join(needed))
 
     doctor = extraction["doctor_instructions"] + ([extraction["follow_up"]] if extraction["follow_up"] else [])
-    if doctor:
-        out += [t["Your doctor also says"], *(f"   {tr[pipeline._sentence(line)]}" for line in doctor), ""]
+    also = [tr[pipeline._sentence(line)] for line in doctor]
+    unclear = [tr[_issue_line(i)] for i in extraction.get("issues", []) if i["level"] == "unsure"]
 
-    unsure = [i for i in extraction.get("issues", []) if i["level"] == "unsure"]
-    if unsure:
-        out.append(t["Sorry, I could not understand everything"])
-        out += [f"   {tr[_issue_line(i)]}" for i in unsure]
-        out += [f"   {t['ask_about_this']}", ""]
-
+    # Plain text, for sharing, printing and the spoken version.
+    out: list[str] = []
+    if illness:
+        out += [t["Your illness"], *illness, ""]
+    if cards:
+        out += [t["Your medicines"], t["intro"], ""]
+    for c in cards:
+        out += [f"{c['n']}. {c['name']}" + (f" — {c['tag']}" if c["tag"] else ""), *c["lines"],
+                *([c["sorry"]] if c["sorry"] else []), ""]
+    if schedule:
+        out += [t["When to take them each day"], *schedule, ""]
+    if also:
+        out += [t["Also"], *also, ""]
+    if unclear:
+        out += [t["Sorry, I could not understand everything"], *unclear, t["ask_about_this"], ""]
     out.append(t["disclaimer"])
-    return {"text": "\n".join(out), "lang": lang, "rtl": lang in RTL, "kept_in_english": kept}
+
+    return {"lang": lang, "rtl": lang in RTL, "illness": illness, "intro": t["intro"], "cards": cards,
+            "schedule": schedule, "also": also, "unclear": unclear, "disclaimer": t["disclaimer"],
+            "labels": {k: t[k] for k in ("Your illness", "Your medicines", "Also", "When to take them each day",
+                                          "Sorry, I could not understand everything")},
+            "ask_about_this": t["ask_about_this"], "text": "\n".join(out).strip(), "kept_in_english": kept}
+
+
+def stamp(lang: str, date: str) -> str:
+    return T.get(lang, T["en"])["checked"](date)

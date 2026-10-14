@@ -59,6 +59,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import ai_pipeline as pipeline  # noqa: E402
+import privacy  # noqa: E402
 import translator  # noqa: E402
 from privacy import keep_medical_only  # noqa: E402
 
@@ -162,6 +163,82 @@ async def transcribe(audio: UploadFile = File(...), x_pin: str | None = Header(d
         path.unlink(missing_ok=True)  # the recording is never kept
 
 
+# --------------------------------------------------------------------------- #
+# What the doctor sees: the prescription with personal details masked, and the checks
+# --------------------------------------------------------------------------- #
+
+_TOKENS = {"patient name": "[NAME]", "age or birth date": "[AGE]", "address": "[ADDRESS]",
+           "phone number or e-mail": "[PHONE]", "ID or insurance number": "[ID]"}
+_INLINE_TOKENS = {"e-mail": "[EMAIL]", "phone number": "[PHONE]", "ID number": "[ID]", "date": "[DATE]",
+                  "age": "[AGE]", "name": "[NAME]"}
+
+
+def mask_personal(text: str) -> tuple[str, list[str]]:
+    """The prescription as the doctor typed it, with personal details shown as [NAME], [AGE]...
+    (the AI receives the version without them). Returns (masked text, chips)."""
+    lines, hidden, stamp_removed, doctor_removed = [], 0, False, False
+    for line in text.splitlines():
+        if privacy._PERSONAL_LINE_RE.match(line) or privacy._DATE_ONLY_LINE_RE.match(line):
+            kind = next((k for k, p in privacy._LINE_KINDS if re.match(p, line, re.IGNORECASE)), "")
+            if kind in _TOKENS:
+                label = line.split(":", 1)[0].strip() if ":" in line else ""
+                rest = line.split(":", 1)[1] if ":" in line else line
+                tokens = [_TOKENS[kind]] + [t for k, pat in privacy._INLINE_PATTERNS
+                                            if (t := _INLINE_TOKENS[k]) != _TOKENS[kind] and k != "name" and pat.search(rest)]
+                hidden += len(tokens)
+                lines.append(f"{label} : " + ", ".join(dict.fromkeys(tokens)) if label else ", ".join(tokens))
+            elif kind == "doctor or practice details":
+                doctor_removed = True
+            else:
+                stamp_removed = True
+            continue
+        for kind, pattern in privacy._INLINE_PATTERNS:
+            line, n = pattern.subn(_INLINE_TOKENS[kind], line)
+            hidden += n
+        lines.append(line)
+    chips = []
+    if hidden:
+        chips.append(f"{hidden} personal detail{'s' if hidden != 1 else ''} hidden before sending")
+    if doctor_removed:
+        chips.append("Doctor's details removed")
+    if stamp_removed:
+        chips.append("Doctor's stamp removed")
+    return "\n".join(lines).strip(), chips
+
+
+def review_items(extraction: dict, sent: str) -> list[dict]:
+    """The "Please check before approving" box: risks, doubts, corrections, and what was verified."""
+    items = []
+    for i in pipeline._all_issues(extraction):
+        kind = {"risk": "HIGH RISK", "unsure": "DOUBT", "note": "CORRECTED"}[i["level"]]
+        items.append({"kind": kind, "source": i["source"], "text": f"{i['what']} — {pipeline._lower_first(i['why'])}."})
+    order = {"HIGH RISK": 0, "DOUBT": 1, "CORRECTED": 3}
+    items.sort(key=lambda it: order[it["kind"]])
+    if any(m.get("purpose") for m in extraction["medicines"]):
+        items.append({"kind": "AI-ADDED", "source": "",
+                      "text": "What each medicine is for is not on the prescription: please check those lines."})
+
+    # Every number in the explanation must be on the prescription.
+    english = pipeline.render_explanation(extraction)
+    body = re.sub(r"^\s*\d+\.\s", "", english, flags=re.MULTILINE)
+    numbers = re.findall(r"\d+(?:[.,]\d+)?", body)
+    allowed = pipeline.numbers_on_prescription(sent) | {"1"}
+    missing = sorted({n for n in numbers if n.replace(",", ".") not in allowed})
+    if missing:
+        items.insert(0, {"kind": "DOUBT", "source": "", "text": f"These numbers are not on the prescription: {', '.join(missing)}."})
+    else:
+        items.append({"kind": "CHECKED", "source": "", "text": f"All {len(numbers)} numbers in the explanation are on the "
+                      "prescription. Dose sentences come from fixed, pre-translated templates."})
+    return items
+
+
+def title_of(extraction: dict) -> str:
+    if extraction["conditions"]:
+        return pipeline._sentence(pipeline._join_or(extraction["conditions"], "and")).rstrip(".")
+    names = [pipeline.short_name(m) for m in extraction["medicines"]]
+    return ", ".join(names[:3]) or "Prescription"
+
+
 @app.post("/api/explain")
 def explain(req: ExplainRequest, x_pin: str | None = Header(default=None)):
     _check_pin(x_pin)
@@ -169,11 +246,14 @@ def explain(req: ExplainRequest, x_pin: str | None = Header(default=None)):
     def stream():
         start = time.monotonic()
         sent, removed = keep_medical_only(req.text)
-        yield json.dumps({"type": "privacy", "removed": removed, "sent_to_ai": sent}, ensure_ascii=False) + "\n"
+        masked, chips = mask_personal(req.text)
+        yield json.dumps({"type": "privacy", "masked": masked, "chips": chips}, ensure_ascii=False) + "\n"
+        read_in = None
         try:
             for event in pipeline.stream_prescription(req.text):
                 elapsed = round(time.monotonic() - start, 2)
                 if event["type"] == "dosing":
+                    read_in = elapsed
                     p = event["prescription"]
                     yield json.dumps({
                         "type": "dosing", "elapsed": elapsed,
@@ -186,7 +266,8 @@ def explain(req: ExplainRequest, x_pin: str | None = Header(default=None)):
                     sheet = translator.render(extraction, req.lang)
                     issues = pipeline._all_issues(extraction)
                     yield json.dumps({
-                        "type": "done", "elapsed": elapsed, "id": rid, "sheet": sheet,
+                        "type": "done", "elapsed": elapsed, "read_in": read_in, "id": rid, "sheet": sheet,
+                        "title": title_of(extraction), "checks": review_items(extraction, sent),
                         "review": event["review"], "needs_review": event["needs_review"],
                         "medicines": len(extraction["medicines"]),
                         "flags_unsure": sum(i["level"] == "unsure" for i in issues),
@@ -212,7 +293,7 @@ def translate(req: TranslateRequest, x_pin: str | None = Header(default=None)):
 def audio(req: AudioRequest, background: BackgroundTasks, x_pin: str | None = Header(default=None)):
     """The patient sheet as an MP3 the patient can keep (Google's text-to-speech; the file is deleted after sending)."""
     _check_pin(x_pin)
-    language = {"en": "english", "fr": "french", "ar": "arabic"}.get(req.lang, "english")
+    language = translator.TTS_LANG.get(req.lang, "english")
     path = Path(tempfile.mkdtemp()) / "patient-sheet.mp3"
     try:
         pipeline.text_to_audio(_speakable(req.text), language, str(path))

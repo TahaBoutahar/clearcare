@@ -6,6 +6,12 @@ project folder above and changes nothing there.
 
 ## What it does
 
+Laptop / iPad: three columns — history (left), the doctor's prescription with personal details
+shown as [NAME], [AGE]… and the "Please check before approving" box (middle), the patient's
+explanation as one card per medicine with a spoken version and PDF / print (right).
+iPhone: the same, stacked, with history in the ☰ menu and Reject / Edit / Approve at the bottom.
+History stays on the device only.
+
 1. **Type, paste or dictate** the prescription (dictation is turned into text on the Mac with
    Whisper; the recording is deleted right away).
 2. **Explain**: how to take each medicine appears within seconds, then the full patient sheet.

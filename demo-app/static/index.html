@@ -5,137 +5,148 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Rx Explainer">
-  <meta name="theme-color" content="#2a78d6">
+  <meta name="theme-color" content="#14211d">
   <link rel="apple-touch-icon" href="/static/icon-180.png">
   <link rel="manifest" href="/manifest.webmanifest">
-  <title>Rx Explainer</title>
-  <link rel="stylesheet" href="/static/styles.css?v=3">
+  <title>Prescription Explainer</title>
+  <link rel="stylesheet" href="/static/styles.css?v=4">
 </head>
 <body>
-  <header class="bar">
-    <button id="nav-new" class="bar-btn" aria-label="New prescription">＋ New</button>
-    <div class="bar-title">Rx Explainer <span class="demo">demo</span></div>
-    <div class="bar-right">
-      <button id="nav-stats" class="bar-btn" aria-label="Pilot numbers">Stats</button>
-      <button id="nav-settings" class="bar-btn" aria-label="Settings">⚙︎</button>
+  <header class="top">
+    <button id="menu" class="icon-btn only-narrow" aria-label="Open history">☰</button>
+    <div class="brand"><span class="brand-icon" aria-hidden="true">▤</span><span>Prescription Explainer</span></div>
+    <div class="top-right">
+      <span class="pill only-wide">🔒 Personal details removed on this computer</span>
+      <span class="pill mono only-wide"><span class="dot"></span><span id="model-name">…</span></span>
+      <button id="avatar" class="avatar" aria-label="Settings">Dr</button>
     </div>
   </header>
 
-  <main>
-    <!-- PIN -->
-    <section id="screen-pin" class="screen hidden">
-      <h1>Enter the PIN</h1>
-      <p class="muted">This demo is protected. Ask the person running it for the PIN.</p>
-      <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN">
-      <button id="pin-go" class="primary big">Continue</button>
-      <p id="pin-error" class="error hidden">Wrong PIN.</p>
-    </section>
+  <div class="layout">
+    <aside id="side" class="side">
+      <button id="new" class="btn primary wide">＋ New prescription</button>
+      <label class="search-label" for="search">Search</label>
+      <input id="search" type="search" placeholder="Illness or medicine" autocomplete="off">
+      <div class="side-head">TODAY</div>
+      <ul id="history" class="history"></ul>
+      <button id="open-stats" class="side-link">Pilot numbers</button>
+    </aside>
+    <div id="scrim" class="scrim hidden"></div>
 
-    <!-- New prescription -->
-    <section id="screen-new" class="screen">
-      <h1>Prescription</h1>
-      <p class="muted small">Type, paste or dictate. Do not include the patient's name: it is not needed.</p>
-      <textarea id="rx-input" rows="8" placeholder="Ex. Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas."></textarea>
-      <div class="row">
-        <button id="mic" class="secondary big" aria-pressed="false">🎙︎ Dictate</button>
-        <button id="example" class="link">Example</button>
-      </div>
-      <p id="mic-status" class="muted small hidden"></p>
-      <label class="field">Patient's language
-        <div class="seg" id="lang-new" role="radiogroup"></div>
-      </label>
-      <button id="explain" class="primary big">Explain</button>
-    </section>
-
-    <!-- Result -->
-    <section id="screen-result" class="screen hidden">
-      <p id="status" class="status"></p>
-      <div id="preview" class="sheet preview hidden"></div>
-
-      <div id="result" class="hidden">
-        <div class="seg" id="lang-result" role="radiogroup" aria-label="Patient's language"></div>
-        <p id="kept" class="muted small hidden"></p>
-        <div id="sheet" class="sheet"></div>
-        <div class="audio-row">
-          <button class="secondary listen" data-target="sheet">🔊 Listen</button>
+    <main class="work">
+      <div id="rx-head" class="rx-head hidden">
+        <div>
+          <div id="rx-meta" class="rx-meta"></div>
+          <h1 id="rx-title"></h1>
         </div>
-
-        <details id="review-box" class="review" open>
-          <summary id="review-title">For the doctor</summary>
-          <div id="review"></div>
-        </details>
-
-        <label id="confirm-wrap" class="confirm hidden">
-          <input type="checkbox" id="confirm"> I checked the items marked HIGH RISK / NOT SURE
-        </label>
-
-        <div class="actions">
-          <button id="approve" class="primary big">✓ Approve</button>
-          <button id="edit" class="secondary big">Edit</button>
-          <button id="reject" class="danger big">Reject</button>
+        <div id="rx-actions" class="rx-actions">
+          <button id="reject" class="btn danger">Reject</button>
+          <button id="edit" class="btn ghost">✎ Edit</button>
+          <button id="approve" class="btn primary">✓ Approve &amp; give to patient</button>
         </div>
+        <div id="rx-done" class="rx-done hidden"></div>
       </div>
-    </section>
 
-    <!-- Edit -->
-    <section id="screen-edit" class="screen hidden">
-      <h1>Edit the patient sheet</h1>
-      <textarea id="edit-text" rows="16"></textarea>
-      <button id="edit-save" class="primary big">Save and approve</button>
-      <button id="edit-cancel" class="link">Cancel</button>
-    </section>
+      <div class="cols">
+        <section class="card doctor">
+          <div class="card-head">
+            <h2>Doctor’s prescription</h2>
+            <div class="seg" id="mode" role="tablist">
+              <button role="tab" data-mode="type" aria-selected="true">Type</button>
+              <button role="tab" data-mode="dictate" aria-selected="false">🎙 Dictate</button>
+            </div>
+          </div>
+          <div id="input-area">
+            <textarea id="rx-input" rows="9" placeholder="Paste or type the prescription. Patient names are not needed."></textarea>
+            <div id="dictate-area" class="dictate hidden">
+              <button id="mic" class="mic" aria-pressed="false" aria-label="Start dictation">🎙</button>
+              <p id="mic-status" class="muted">Tap to dictate the prescription. Tap again to stop.</p>
+            </div>
+            <div class="row">
+              <button id="example" class="link">Try an example</button>
+              <button id="explain" class="btn primary">Explain</button>
+            </div>
+          </div>
+          <pre id="masked" class="masked hidden"></pre>
+          <div id="chips" class="chips"></div>
+          <div id="checks" class="checks hidden"></div>
+          <p id="status" class="status"></p>
+        </section>
 
-    <!-- Reject -->
-    <section id="screen-reject" class="screen hidden">
-      <h1>Why is it wrong?</h1>
-      <p class="muted small">This helps measure the tool. Nothing is given to the patient.</p>
-      <div class="chips" id="reasons"></div>
-      <button id="reject-cancel" class="link">Back</button>
-    </section>
+        <section class="card patient">
+          <h2>Patient’s language</h2>
+          <div id="langs" class="lang-chips" role="radiogroup"></div>
+          <p class="muted small">The explanation, the PDF and the spoken version are all made in this language.</p>
+          <hr>
+          <div id="sheet" class="sheet"><p class="placeholder">The patient’s explanation will appear here.</p></div>
 
-    <!-- Approved -->
-    <section id="screen-done" class="screen hidden">
-      <p class="ok-banner">✓ Approved — ready for the patient</p>
-      <div id="final" class="sheet print-me"></div>
-      <div class="audio-row">
-        <button class="secondary listen" data-target="final">🔊 Listen</button>
-        <button id="audio-file" class="secondary">♫ Audio file</button>
+          <div id="player" class="player hidden">
+            <button id="play" class="play" aria-label="Play">▶</button>
+            <div>
+              <div class="player-title">Spoken version · <span id="player-lang">English</span></div>
+              <div class="bar"><div id="bar-fill"></div></div>
+            </div>
+            <div id="player-time" class="mono player-time">0:00 / 0:00</div>
+          </div>
+          <p id="player-note" class="muted tiny hidden">Voice made with Google’s text-to-speech (the sheet has no names).
+            <button id="speak-local" class="link tiny">Use this phone’s voice instead</button></p>
+
+          <div id="give" class="give hidden">
+            <span class="muted">After approval, give it as</span>
+            <div class="give-btns">
+              <button id="pdf" class="btn ghost">⤓ Save as PDF · <span id="pdf-lang">English</span></button>
+              <button id="share" class="btn ghost">Share</button>
+              <button id="print" class="btn ghost">⎙ Print</button>
+            </div>
+          </div>
+        </section>
       </div>
-      <p class="muted small">The audio file is made with Google's voice service (the sheet has no names). "Listen" stays on the phone.</p>
-      <div class="actions">
-        <button id="share" class="primary big">Share</button>
-        <button id="print" class="secondary big">Print</button>
-      </div>
-      <button id="again" class="link">New prescription</button>
-    </section>
+    </main>
+  </div>
 
-    <!-- Stats -->
-    <section id="screen-stats" class="screen hidden">
-      <h1>Pilot numbers</h1>
-      <p class="muted small">Decisions logged on this demo. No patient text is stored.</p>
-      <div id="stats" class="tiles"></div>
-      <div id="reasons-table"></div>
-    </section>
+  <div id="bottom-actions" class="bottom-actions hidden">
+    <button id="reject-m" class="btn danger">Reject</button>
+    <button id="edit-m" class="btn ghost">Edit</button>
+    <button id="approve-m" class="btn primary">✓ Approve</button>
+  </div>
 
-    <!-- Settings -->
-    <section id="screen-settings" class="screen hidden">
-      <h1>Settings</h1>
-      <label class="field">Doctor code <span class="muted small">(anonymous, e.g. D01)</span>
-        <input id="doctor" type="text" autocomplete="off" placeholder="D01">
-      </label>
-      <label class="field">Default patient language
-        <div class="seg" id="lang-default" role="radiogroup"></div>
-      </label>
-      <label class="field">PIN
-        <input id="pin-setting" type="password" inputmode="numeric" autocomplete="off">
-      </label>
-      <button id="settings-save" class="primary big">Save</button>
-      <p id="about" class="muted small"></p>
-    </section>
-  </main>
+  <dialog id="dlg-edit" class="dlg">
+    <h2>Edit the patient sheet</h2>
+    <textarea id="edit-text" rows="16"></textarea>
+    <div class="row end"><button class="btn ghost" data-close>Cancel</button><button id="edit-save" class="btn primary">Save and approve</button></div>
+  </dialog>
+  <dialog id="dlg-reject" class="dlg">
+    <h2>Why is it wrong?</h2>
+    <p class="muted small">Nothing is given to the patient. This helps measure the tool.</p>
+    <div id="reasons" class="reason-chips"></div>
+    <div class="row end"><button class="btn ghost" data-close>Back</button></div>
+  </dialog>
+  <dialog id="dlg-settings" class="dlg">
+    <h2>Settings</h2>
+    <label class="field">Doctor code (anonymous, e.g. D01)<input id="doctor" type="text" autocomplete="off"></label>
+    <label class="field">Default patient language<select id="default-lang"></select></label>
+    <label class="field">PIN<input id="pin-setting" type="password" inputmode="numeric" autocomplete="off"></label>
+    <p id="about" class="muted tiny"></p>
+    <div class="row end"><button class="btn ghost" data-close>Cancel</button><button id="settings-save" class="btn primary">Save</button></div>
+  </dialog>
+  <dialog id="dlg-stats" class="dlg wide">
+    <h2>Pilot numbers</h2>
+    <p class="muted small">Decisions logged by this demo. No patient text is stored.</p>
+    <div id="stats" class="tiles"></div>
+    <div id="reasons-table"></div>
+    <div class="row end"><button class="btn ghost" data-close>Close</button></div>
+  </dialog>
+  <dialog id="dlg-pin" class="dlg">
+    <h2>Enter the PIN</h2>
+    <p class="muted small">Ask the person running the demo.</p>
+    <input id="pin-input" type="password" inputmode="numeric" autocomplete="off">
+    <p id="pin-error" class="error hidden">Wrong PIN.</p>
+    <div class="row end"><button id="pin-go" class="btn primary">Continue</button></div>
+  </dialog>
 
-  <script src="/static/app.js?v=2"></script>
+  <div id="print-sheet" class="print-sheet" aria-hidden="true"></div>
+  <script src="/static/app.js?v=5"></script>
 </body>
 </html>
