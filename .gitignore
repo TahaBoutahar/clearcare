@@ -10,3 +10,4 @@ data/PxCorpus*
 
 # Demo app: kept on this computer only, never pushed
 demo-app/
+benchmark/results/.progress_*

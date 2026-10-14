@@ -14,7 +14,8 @@ Measures, for every case and overall:
     - required / forbidden wording, expected refusals
     - speed (time to dosing, total) and reading level of the patient text
 
-Results are written to benchmark/results/<time>_<provider>.json (read by the AMD Full stack dashboard).
+Results are written to benchmark/results/<time>_<provider>_<set>.json (read by the AMD Full stack dashboard).
+Progress is saved after every case; if a run stops, the same command continues where it stopped.
 """
 
 from __future__ import annotations
@@ -302,13 +303,32 @@ def run_benchmark(cases: list[dict], cold: bool = False,
         pipeline.DRUG_INFO_CACHE_PATH = Path(tempfile.mkdtemp()) / "drug_info.json"
     if no_purpose:  # the "what it is for" line is not scored; skipping it makes big runs faster
         pipeline._fetch_drug_purpose = lambda med: None
+    # Every finished case is appended to a progress file, so a stopped run can continue later
+    # (same test set, provider and model) instead of starting again.
+    progress_file = RESULTS_DIR / f".progress_{Path(dataset).stem}_{pipeline.LLM_PROVIDER}{'_cold' if cold else ''}.jsonl"
+    done: dict[str, dict] = {}
     started = datetime.now()
+    if progress_file.is_file():
+        for line in progress_file.read_text(encoding="utf-8").splitlines():
+            row = json.loads(line)
+            if row.get("model") == pipeline.LLM_MODEL:
+                started = datetime.fromisoformat(row["started"])
+                done[row["result"]["id"]] = row["result"]
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
     results = []
-    for i, case in enumerate(cases, 1):
-        result = run_case(case)
-        results.append(result)
-        if on_progress:
-            on_progress(i, len(cases), result)
+    with progress_file.open("a", encoding="utf-8") as progress:
+        for i, case in enumerate(cases, 1):
+            if case["id"] in done:  # finished in an earlier, interrupted run
+                results.append(done[case["id"]])
+                continue
+            result = run_case(case)
+            results.append(result)
+            progress.write(json.dumps({"started": started.isoformat(timespec="seconds"), "model": pipeline.LLM_MODEL,
+                                       "result": result}, ensure_ascii=False, default=str) + "\n")
+            progress.flush()
+            if on_progress:
+                on_progress(i, len(cases), result)
     report = {
         "meta": {
             "started": started.isoformat(timespec="seconds"),
@@ -323,7 +343,9 @@ def run_benchmark(cases: list[dict], cold: bool = False,
     tag = Path(dataset).stem
     path = RESULTS_DIR / f"{started:%Y%m%d_%H%M%S}_{pipeline.LLM_PROVIDER}_{tag}{'_cold' if cold else ''}.json"
     path.write_text(json.dumps(report, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    progress_file.unlink(missing_ok=True)  # complete: the saved report replaces the progress file
     report["meta"]["file"] = path.name
+    report["meta"]["resumed_cases"] = len(done)
     return report
 
 
@@ -365,7 +387,8 @@ def main() -> None:
         status = "PASS" if not failed else f"FAIL ({len(failed)}): " + "; ".join(failed[:3])
         print(f"[{i}/{n}] {r['id']:<24} {r['time_total']:>5.1f}s  {status}", flush=True)
 
-    print(f"Benchmark · {args.cases} · {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL} · {len(cases)} cases\n", flush=True)
+    print(f"Benchmark · {args.cases} · {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL} · {len(cases)} cases", flush=True)
+    print("Stopped runs continue where they stopped: just run the same command again.\n", flush=True)
     report = run_benchmark(cases, cold=args.cold, on_progress=progress, dataset=args.cases, no_purpose=args.no_purpose)
     s = report["summary"]
     print(f"\nChecks passed:        {s['checks']['passed']}/{s['checks']['total']} ({s['checks']['rate']:.0%})")
