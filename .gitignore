@@ -7,3 +7,6 @@ outputs/
 data/PxCorpus*
 .DS_Store
 .cache/
+
+# Demo app: kept on this computer only, never pushed
+demo-app/
