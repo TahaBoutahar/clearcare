@@ -18,6 +18,7 @@ let inputMode = "typed";
 // ------------------------------------------------------------------ navigation
 const SCREENS = ["pin", "new", "result", "edit", "reject", "done", "stats", "settings"];
 function go(name) {
+  if ("speechSynthesis" in window) stopSpeaking();
   SCREENS.forEach((s) => show($(`#screen-${s}`), s === name));
   window.scrollTo(0, 0);
 }
@@ -257,6 +258,60 @@ $("#share").onclick = async () => {
     try { await navigator.share({ title: "Prescription", text: state.final }); } catch {}
   } else {
     try { await navigator.clipboard.writeText(state.final); $("#share").textContent = "Copied"; } catch {}
+  }
+};
+
+// ------------------------------------------------------------------ audio
+// "Listen": the phone's own voice (offline, nothing sent). Sentence by sentence, because
+// iOS can stop long texts. "Audio file": an MP3 made on the server, to keep or send.
+const VOICE_LANG = { en: "en-US", fr: "fr-FR", ar: "ar-SA" };
+function sentencesOf(text) {
+  return text.split("\n").map((l) => l.trim().replace(/^\d+\.\s*/, "")).filter(Boolean)
+    .flatMap((l) => l.split(/(?<=[.!?؟])\s+/)).filter(Boolean);
+}
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  document.querySelectorAll(".listen").forEach((b) => { b.setAttribute("aria-pressed", "false"); b.textContent = "🔊 Listen"; });
+}
+document.querySelectorAll(".listen").forEach((btn) => (btn.onclick = () => {
+  if (!("speechSynthesis" in window)) return alert("This phone cannot read aloud here. Use the audio file.");
+  if (btn.getAttribute("aria-pressed") === "true") return stopSpeaking();
+  stopSpeaking();
+  const lang = state.lang || "en";
+  const voice = speechSynthesis.getVoices().find((v) => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
+  const text = btn.dataset.target === "final" ? state.final : state.sheet.text;
+  const parts = sentencesOf(text);
+  btn.setAttribute("aria-pressed", "true");
+  btn.textContent = "■ Stop";
+  parts.forEach((part, i) => {
+    const u = new SpeechSynthesisUtterance(part);
+    u.lang = VOICE_LANG[lang];
+    if (voice) u.voice = voice;
+    u.rate = 0.9;  // a little slower for patients
+    if (i === parts.length - 1) u.onend = stopSpeaking;
+    speechSynthesis.speak(u);
+  });
+}));
+window.speechSynthesis?.getVoices();  // iOS loads voices lazily
+
+$("#audio-file").onclick = async () => {
+  const btn = $("#audio-file");
+  btn.disabled = true;
+  btn.textContent = "Making the audio…";
+  try {
+    const blob = await (await postJSON("/api/audio", { text: state.final, lang: state.lang })).blob();
+    const file = new File([blob], `prescription-${state.lang}.mp3`, { type: "audio/mpeg" });
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Prescription (audio)" });
+    } else {
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: file.name });
+      a.click();
+    }
+  } catch (e) {
+    if (e.name !== "AbortError") alert(`Sorry, the audio could not be made. Why: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "♫ Audio file";
   }
 };
 

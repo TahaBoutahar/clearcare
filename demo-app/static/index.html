@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/static/icon-180.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <title>Rx Explainer</title>
-  <link rel="stylesheet" href="/static/styles.css?v=2">
+  <link rel="stylesheet" href="/static/styles.css?v=3">
 </head>
 <body>
   <header class="bar">
@@ -58,6 +58,9 @@
         <div class="seg" id="lang-result" role="radiogroup" aria-label="Patient's language"></div>
         <p id="kept" class="muted small hidden"></p>
         <div id="sheet" class="sheet"></div>
+        <div class="audio-row">
+          <button class="secondary listen" data-target="sheet">🔊 Listen</button>
+        </div>
 
         <details id="review-box" class="review" open>
           <summary id="review-title">For the doctor</summary>
@@ -96,6 +99,11 @@
     <section id="screen-done" class="screen hidden">
       <p class="ok-banner">✓ Approved — ready for the patient</p>
       <div id="final" class="sheet print-me"></div>
+      <div class="audio-row">
+        <button class="secondary listen" data-target="final">🔊 Listen</button>
+        <button id="audio-file" class="secondary">♫ Audio file</button>
+      </div>
+      <p class="muted small">The audio file is made with Google's voice service (the sheet has no names). "Listen" stays on the phone.</p>
       <div class="actions">
         <button id="share" class="primary big">Share</button>
         <button id="print" class="secondary big">Print</button>
@@ -128,6 +136,6 @@
     </section>
   </main>
 
-  <script src="/static/app.js?v=1"></script>
+  <script src="/static/app.js?v=2"></script>
 </body>
 </html>

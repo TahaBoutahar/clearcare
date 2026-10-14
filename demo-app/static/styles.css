@@ -124,3 +124,7 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
   body { background: #fff; color: #000; }
   .sheet { border: 0; font-size: 16pt; }
 }
+
+.audio-row { display: flex; gap: 8px; }
+.audio-row button { flex: 1; min-height: 48px; border-radius: 12px; font-size: 17px; font-weight: 600; }
+.listen[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }

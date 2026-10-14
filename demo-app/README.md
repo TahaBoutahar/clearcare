@@ -16,7 +16,10 @@ project folder above and changes nothing there.
    or high-risk, the doctor must tick "I checked" before approving.
 5. **Approve, edit or reject.** The approved sheet can be **shared** (WhatsApp, Messages…) or
    **printed**, stamped "Checked by your doctor".
-6. **Stats**: approval rate, edits, rejections and reasons, time per prescription, whether the
+6. **Audio**: *Listen* reads the sheet aloud with the phone's own voice (English, French or Arabic;
+   offline, nothing is sent). *Audio file* makes an MP3 to keep or send by WhatsApp; it uses
+   Google's text-to-speech, so the sheet (which has no names) is sent to Google.
+7. **Stats**: approval rate, edits, rejections and reasons, time per prescription, whether the
    flags pointed at real problems. Only decisions are logged (`data/demo_log.jsonl`), never
    patient text.
 

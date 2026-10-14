@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import secrets
 import sys
 import tempfile
@@ -52,7 +53,7 @@ def load_settings(path: Path) -> None:
 load_settings(HERE / ".env")      # demo settings first (PIN, provider for the demo, Whisper size...)
 load_settings(PROJECT / ".env")   # then the project's provider / model / keys (read only)
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile  # noqa: E402
+from fastapi import BackgroundTasks, FastAPI, File, Header, HTTPException, UploadFile  # noqa: E402
 from fastapi.responses import FileResponse, StreamingResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
@@ -110,6 +111,11 @@ class ExplainRequest(BaseModel):
 class TranslateRequest(BaseModel):
     id: str
     lang: str
+
+
+class AudioRequest(BaseModel):
+    text: str
+    lang: str = "en"
 
 
 class Decision(BaseModel):
@@ -200,6 +206,31 @@ def translate(req: TranslateRequest, x_pin: str | None = Header(default=None)):
     if extraction is None:
         raise HTTPException(404, "This result has expired; explain the prescription again")
     return translator.render(extraction, req.lang)
+
+
+@app.post("/api/audio")
+def audio(req: AudioRequest, background: BackgroundTasks, x_pin: str | None = Header(default=None)):
+    """The patient sheet as an MP3 the patient can keep (Google's text-to-speech; the file is deleted after sending)."""
+    _check_pin(x_pin)
+    language = {"en": "english", "fr": "french", "ar": "arabic"}.get(req.lang, "english")
+    path = Path(tempfile.mkdtemp()) / "patient-sheet.mp3"
+    try:
+        pipeline.text_to_audio(_speakable(req.text), language, str(path))
+    except pipeline.PipelineError as exc:
+        raise HTTPException(502, f"Sorry, I could not make the audio. Why: {exc}")
+    background.add_task(lambda: (path.unlink(missing_ok=True), path.parent.rmdir()))
+    return FileResponse(path, media_type="audio/mpeg", filename=f"prescription-{req.lang}.mp3")
+
+
+def _speakable(text: str) -> str:
+    """Read numbered medicine titles naturally: "1. Amoxicilline 1 g" -> "Amoxicilline 1 g." """
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line:
+            line = re.sub(r"^\d+\.\s*", "", line)
+            lines.append(line if line.endswith((".", ":", "؟", "!")) else line + ".")
+    return "\n".join(lines)
 
 
 @app.post("/api/decision")
