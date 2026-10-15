@@ -1,0 +1,1261 @@
+{
+ "judge": "MiMo-V2.6-Flash",
+ "summary": {
+  "planted_errors": 31,
+  "caught": 29,
+  "low_score_only": 29,
+  "made_up_reasons": 8,
+  "ratings_with_made_up_reasons": 7,
+  "right_criterion": 29,
+  "reason_points_at_it": 31,
+  "clean": 5,
+  "false_alarms": 2,
+  "by_kind": {
+   "wrong_dose": {
+    "caught": 5,
+    "low_score": 5,
+    "total": 5
+   },
+   "wrong_time": {
+    "caught": 4,
+    "low_score": 4,
+    "total": 4
+   },
+   "wrong_duration": {
+    "caught": 4,
+    "low_score": 4,
+    "total": 4
+   },
+   "wrong_food": {
+    "caught": 3,
+    "low_score": 3,
+    "total": 3
+   },
+   "prn_removed": {
+    "caught": 3,
+    "low_score": 3,
+    "total": 4
+   },
+   "limit_removed": {
+    "caught": 2,
+    "low_score": 2,
+    "total": 3
+   },
+   "missing_medicine": {
+    "caught": 3,
+    "low_score": 3,
+    "total": 3
+   },
+   "added_advice": {
+    "caught": 5,
+    "low_score": 5,
+    "total": 5
+   }
+  }
+ },
+ "rows": [
+  {
+   "case": "angine-full",
+   "kind": "clean",
+   "change": "",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicillin is prescribed 'au milieu des repas' (between meals) but the explanation says take it with food, which is the opposite; Strepsils is prescribed 3 times daily but the explanation makes it 'only when you have sore throat, up to 3 times a day'.",
+    "complete": "All medicines, doses, times, durations and instructions are present.",
+    "no_added_advice": "Adds instructions not in the prescription.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food, for 8 days / only when you have sore throat, up to 3 times a day",
+    "complete": "",
+    "no_added_advice": "Suck it slowly. / If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "faithful",
+    "no_added_advice"
+   ],
+   "verdict": "Amoxicillin food rule is reversed and Strepsils frequency is changed to only-if-needed, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": false,
+   "reason_points_at_it": false,
+   "caught": false
+  },
+  {
+   "case": "angine-full",
+   "kind": "wrong_dose",
+   "change": "1 -> 5",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 0,
+    "no_added_advice": 3,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicilline dose is wrong: 5 pills instead of 1 tablet each time.",
+    "complete": "Amoxicilline dose wrong (5 instead of 1) counts as a wrong dose detail.",
+    "no_added_advice": "Adds instructions not in the prescription (suck slowly, ask pharmacist).",
+    "clear": "Mostly clear but the '5 pill' error makes the dosing confusing.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 5 Amoxicilline pill in the morning and in the evening",
+    "complete": "Take 5 Amoxicilline pill",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "Take 5 Amoxicilline pill",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicilline dose is wrong (5 pills instead of 1), so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "wrong_time",
+   "change": "morning -> evening",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 0,
+    "no_added_advice": 3,
+    "clear": 2,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicilline timing wrong (evening and evening instead of morning and evening) and food rule changed to 'with food' instead of between meals",
+    "complete": "Amoxicilline timing wrong: morning dose missing, replaced by a second evening dose",
+    "no_added_advice": "Adds instructions not in the prescription",
+    "clear": "Contradictory repeated phrase 'in the evening and in the evening' is confusing",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Amoxicilline pill in the evening and in the evening, with food, for 8 days.",
+    "complete": "Take 1 Amoxicilline pill in the evening and in the evening",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "Take 1 Amoxicilline pill in the evening and in the evening",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicilline timing and food rule are wrong, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "wrong_duration",
+   "change": "8 days -> 10 days",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Duration of Amoxicilline changed from 8 days to 10 days, and Strepsils frequency changed from 3 times a day to only when needed up to 3 times a day.",
+    "complete": "The Strepsils instruction is altered to 'only when needed' rather than 3 times per day as prescribed.",
+    "no_added_advice": "Adds instructions not in the prescription.",
+    "clear": "",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "for 10 days",
+    "complete": "Take 1 lozenge of Strepsils only when you have sore throat, up to 3 times a day.",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicilline duration wrongly changed to 10 days and Strepsils frequency altered, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "wrong_food",
+   "change": "with food -> before eating",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 1,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicilline must be taken in the middle of meals but the explanation says before eating",
+    "complete": "Strepsils frequency is reduced to 'up to 3 times a day' instead of 3 times per day",
+    "no_added_advice": "Extra instruction not in the prescription",
+    "clear": "Sentences are short and simple",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "before eating",
+    "complete": "up to 3 times a day",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicilline food rule is wrong (before eating instead of in the middle of meals), so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "prn_removed",
+   "change": "removed \"only when you have fever or pain\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicillin must be taken between meals (au milieu des repas), not with food, and Strepsils is 3 times a day, not up to 3 times only when needed.",
+    "complete": "The Strepsils frequency '3 fois par jour' is weakened to 'up to 3 times a day' and the paracetamol 'toutes les 6 h si fièvre ou douleur' condition is only partly stated.",
+    "no_added_advice": "Extra instruction 'Suck it slowly' and 'Wait at least 6 hours before you take another one' restate/embellish beyond the prescription wording.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food, for 8 days / only when you have sore throat, up to 3 times a day",
+    "complete": "Strepsils : 1 pastille à sucer 3 fois par jour si mal de gorge",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "faithful"
+   ],
+   "verdict": "The food rule for amoxicillin is reversed and the Strepsils frequency is changed, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "limit_removed",
+   "change": "removed \"Do not take more than 3 pills in one day.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 1,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicillin must be taken between meals but the explanation says with food",
+    "complete": "The maximum of 3 tablets per day for paracetamol is missing",
+    "no_added_advice": "Extra instruction not in the prescription",
+    "clear": "",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food, for 8 days",
+    "complete": "max 3 cp/j.",
+    "no_added_advice": "Suck it slowly.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicillin food rule is reversed and the paracetamol daily maximum is missing.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "missing_medicine",
+   "change": "removed 3. Strepsils",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 0,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicillin must be taken 'au milieu des repas' (between meals), but the explanation says 'with food', which is the opposite.",
+    "complete": "Strepsils is never given its own medicine entry with dose and frequency; it only appears briefly in the schedule without the 3-times-per-day instruction.",
+    "no_added_advice": "Adds closing advice not written on the prescription.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food",
+    "complete": "Strepsils (1 lozenge)",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicillin food rule is reversed and Strepsils dosing is missing, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "angine-full",
+   "kind": "added_advice",
+   "change": "added \"Avoid alcohol while you take it, and stop taking it if you feel dizzy.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 0,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says Amoxicilline 'au milieu des repas' (between meals) but the explanation says 'with food', and it adds an alcohol/dizziness instruction not in the prescription.",
+    "complete": "The food rule for Amoxicilline is changed rather than missing, but the instruction 'au milieu des repas' is not conveyed.",
+    "no_added_advice": "The explanation adds warnings the doctor did not write: alcohol avoidance and stopping if dizzy, plus 'Suck it slowly'.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food, for 8 days. Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "complete": "au milieu des repas",
+    "no_added_advice": "Avoid alcohol while you take it, and stop taking it if you feel dizzy. Suck it slowly.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "no_added_advice"
+   ],
+   "verdict": "The food rule is reversed (with food instead of between meals) and extra warnings were added, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "clean",
+   "change": "",
+   "score": 4,
+   "criteria": {
+    "faithful": 4,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The Toplexil dose '1 tablespoon' is invented since the prescription leaves the dose as '???' and does not specify a tablespoon.",
+    "complete": "All medicines, doses, times, durations and the follow-up instruction are present.",
+    "no_added_advice": "Only allowed purpose statements and the note about unclear dose are added.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 tablespoon of Toplexil sirop.",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Faithful overall except the Toplexil dose '1 tablespoon' is not written on the prescription.",
+   "flagged": false,
+   "right_criterion": false,
+   "reason_points_at_it": false,
+   "caught": false
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "wrong_dose",
+   "change": "1 -> 5",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The Augmentin dose is changed from 1 sachet to 5 sachets.",
+    "complete": "The Toplexil dose is stated as 1 tablespoon although the prescription dose is unclear (???) and not specified.",
+    "no_added_advice": "Extra explanations of what each medicine is for were added beyond the prescription, though partly allowed.",
+    "clear": "Mostly clear, but the repeated uncertainty notes are slightly confusing.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 5 sachet of Augmentin in the morning and in the evening, for 7 days.",
+    "complete": "Take 1 tablespoon of Toplexil sirop.",
+    "no_added_advice": "Toplexil sirop is for cough and allergies.",
+    "clear": "Sorry, I am not sure about how often to take it.",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The Augmentin dose is dangerously wrong (5 sachets instead of 1) and the Toplexil dose is invented.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "wrong_time",
+   "change": "morning -> evening",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 1,
+    "clear": 3,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Augmentin is prescribed morning and evening but the explanation says evening and evening, dropping the morning dose.",
+    "complete": "The prescription's diagnostic and the unspecified Toplexil dose quantity are not fully conveyed (the '???' dose is flagged but the spoon amount is invented as tablespoon).",
+    "no_added_advice": "Extra advice sentences were added beyond the prescription.",
+    "clear": "The contradictory 'evening and in the evening' makes the dosing confusing.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 sachet of Augmentin in the evening and in the evening, for 7 days.",
+    "complete": "Take 1 tablespoon of Toplexil sirop.",
+    "no_added_advice": "Please ask your doctor or pharmacist about this.",
+    "clear": "Take 1 sachet of Augmentin in the evening and in the evening, for 7 days.",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Augmentin timing is wrong (evening twice instead of morning and evening), so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "wrong_duration",
+   "change": "7 days -> 9 days",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Duration changed from 7 days to 9 days.",
+    "complete": "The 7-day duration is not correctly conveyed (stated as 9 days).",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "for 9 days",
+    "complete": "pendant 7 jours",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The Augmentin duration is wrong (9 days instead of 7), so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "prn_removed",
+   "change": "removed \"only when you have trouble breathing\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Ventoline's condition 'if breathing trouble' is dropped, and Toplexil's dose '1 tablespoon' is invented when the prescription says '???'",
+    "complete": "The conditional 'si gêne respiratoire' for Ventoline is missing",
+    "no_added_advice": "Extra explanations of what medicines are for and repeated advice to ask were not prescribed",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 2 puffs of Ventoline.",
+    "complete": "2 bouffées si gêne respiratoire.",
+    "no_added_advice": "Augmentin is for infections.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The Ventoline condition is dropped and the unclear Toplexil dose is invented as 1 tablespoon.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "missing_medicine",
+   "change": "removed 3. Ventoline",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 0,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Ventoline is completely missing from the explanation, and the Toplexil dose is stated as 1 tablespoon which is not written on the prescription.",
+    "complete": "The third medicine Ventoline with its instruction is not mentioned at all.",
+    "no_added_advice": "Adds explanations of what medicines are for and extra advice not written by the doctor, though partly allowed.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 tablespoon of Toplexil sirop.",
+    "complete": "Ventoline : 2 bouffées si gêne respiratoire.",
+    "no_added_advice": "Augmentin is for infections.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Ventoline is missing entirely and an unwritten Toplexil dose was invented, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "unclear-dose",
+   "kind": "added_advice",
+   "change": "added \"Avoid alcohol while you take it, and stop taking it if you feel dizzy.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 0,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Added instructions not in the prescription: avoiding alcohol, stopping if dizzy, and '1 tablespoon' dose which is not written.",
+    "complete": "All medicines, doses, times, duration, and follow-up instruction are present.",
+    "no_added_advice": "Adds warnings and a dose that the doctor did not write.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Avoid alcohol while you take it, and stop taking it if you feel dizzy. / Take 1 tablespoon of Toplexil sirop.",
+    "complete": "",
+    "no_added_advice": "Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "faithful"
+   ],
+   "verdict": "The explanation adds an alcohol/dizziness warning and invents a tablespoon dose for Toplexil that the prescription does not state.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "clean",
+   "change": "",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take amoxicillin in the middle of meals, but the explanation says with food, which changes the food rule.",
+    "complete": "All medicines, doses, frequencies, durations, maximum and follow-up are present.",
+    "no_added_advice": "The closing line is added advice not written by the doctor.",
+    "clear": "Sentences are short and simple.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food",
+    "complete": "",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The food rule for amoxicillin is changed (\"with food\" instead of \"in the middle of meals\"), so the explanation is not faithful.",
+   "flagged": true,
+   "right_criterion": false,
+   "reason_points_at_it": false,
+   "caught": false
+  },
+  {
+   "case": "personal-details",
+   "kind": "wrong_dose",
+   "change": "1 -> 5",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The dose is changed from 1 pill to 5 pills, and the food rule is reversed from between meals to with food.",
+    "complete": "All medicines and instructions are present, but the amoxicilline dose is stated wrongly as 5 pills.",
+    "no_added_advice": "Adds a closing suggestion not written by the doctor, though it is generic.",
+    "clear": "Mostly clear, but '5 Amoxicilline pill' is grammatically broken.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 5 Amoxicilline pill in the morning and in the evening, with food, for 8 days.",
+    "complete": "Take 5 Amoxicilline pill",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "Take 5 Amoxicilline pill",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The amoxicilline dose is wrong (5 pills instead of 1) and the food rule is reversed, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "wrong_time",
+   "change": "morning -> evening",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 3,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Amoxicillin is prescribed morning and evening but the explanation says evening and evening, and the food rule is changed from between meals to with food.",
+    "complete": "The instruction to take amoxicillin in the middle of meals is missing/changed, though other details are present.",
+    "no_added_advice": "Adds a closing suggestion not written by the doctor.",
+    "clear": "The duplicated 'in the evening and in the evening' is confusing.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Amoxicilline pill in the evening and in the evening, with food, for 8 days.",
+    "complete": "au milieu des repas",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "in the evening and in the evening",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicillin timing and food rule are wrong, so the explanation must not be used as is.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "wrong_duration",
+   "change": "8 days -> 10 days",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Duration of amoxicillin is changed from 8 days to 10 days, and 'au milieu des repas' (between meals) became 'with food'.",
+    "complete": "All medicines, doses, frequencies, maximum, and follow-up are present.",
+    "no_added_advice": "The closing line is generic advice not written by the doctor.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "for 10 days",
+    "complete": "",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Amoxicillin duration is wrong (10 days instead of 8) and the food rule is altered, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "wrong_food",
+   "change": "with food -> before eating",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take amoxicillin in the middle of meals but the explanation says before eating.",
+    "complete": "",
+    "no_added_advice": "The closing line is added advice not written in the prescription.",
+    "clear": "",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "before eating",
+    "complete": "",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The food rule for amoxicillin is changed from 'au milieu des repas' to 'before eating', which is a wrong instruction.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "prn_removed",
+   "change": "removed \"only when you have fever\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take amoxicillin in the middle of meals, but the explanation says with food, and it drops the 'if fever' condition for paracetamol.",
+    "complete": "The condition 'si fièvre' (only if fever) for paracetamol is not stated in the explanation.",
+    "no_added_advice": "The closing sentence is generic advice not written by the doctor, though it is standard.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food, for 8 days. / Only if needed: Paracétamol 1 g (1 pill)",
+    "complete": "Paracétamol 1 g : 1 cp toutes les 6 h si fièvre, max 3 cp/j.",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "faithful"
+   ],
+   "verdict": "The explanation changes 'au milieu des repas' to 'with food' and omits the 'only if fever' condition for paracetamol.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "limit_removed",
+   "change": "removed \"Do not take more than 3 pills in one day.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says max 3 pills per day for paracetamol, which is replaced by a vaguer rule, and the food rule 'au milieu des repas' (between meals) is changed to 'with food'.",
+    "complete": "The maximum of 3 pills per day of paracetamol is missing from the explanation.",
+    "no_added_advice": "The closing sentence is general advice not written by the doctor, though it is standard.",
+    "clear": "Sentences are short and easy to follow.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Wait at least 6 hours before you take another one. / Take 1 Amoxicilline pill in the morning and in the evening, with food, for 8 days.",
+    "complete": "max 3 cp/j.",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "faithful"
+   ],
+   "verdict": "The daily maximum for paracetamol is missing and the amoxicillin food rule is altered, so the explanation is unsafe.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "missing_medicine",
+   "change": "removed 2. Paracétamol 1 g",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 0,
+    "no_added_advice": 3,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take amoxicillin in the middle of meals (au milieu des repas), but the explanation says 'with food', and the paracetamol schedule (every 6h, max 3/day) is missing from the medicine section.",
+    "complete": "The Paracétamol instructions (1 tablet every 6 hours if fever, max 3 per day) are never explained in the medicines section.",
+    "no_added_advice": "Adds a closing sentence not written by the doctor.",
+    "clear": "Mostly clear, but the paracetamol entry under 'Only if needed' omits its dosing schedule.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food",
+    "complete": "Paracétamol 1 g : 1 cp toutes les 6 h si fièvre, max 3 cp/j.",
+    "no_added_advice": "If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "Only if needed: Paracétamol 1 g (1 pill)",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The paracetamol dosing instructions are missing and the food rule for amoxicillin is changed.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "personal-details",
+   "kind": "added_advice",
+   "change": "added \"Avoid alcohol while you take it, and stop taking it if you feel dizzy.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 1,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take amoxicillin in the middle of meals, but the explanation says with food, which is a different instruction.",
+    "complete": "",
+    "no_added_advice": "The explanation adds warnings that the doctor did not write.",
+    "clear": "",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "with food",
+    "complete": "",
+    "no_added_advice": "Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The food instruction is changed and extra warnings were added, so the explanation is not faithful to the prescription.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "paracetamol-prn",
+   "kind": "clean",
+   "change": "",
+   "score": 5,
+   "criteria": {
+    "faithful": 5,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "All details match the prescription.",
+    "complete": "All prescription details are covered.",
+    "no_added_advice": "Only standard closing line added, no medical advice.",
+    "clear": "Sentences are short and clear.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Accurate and complete explanation.",
+   "flagged": false,
+   "right_criterion": false,
+   "reason_points_at_it": false,
+   "caught": false
+  },
+  {
+   "case": "paracetamol-prn",
+   "kind": "wrong_dose",
+   "change": "1 -> 5",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The dose is wrong: the prescription says 1 tablet, the explanation says 5 pills.",
+    "complete": "All elements of the prescription are present.",
+    "no_added_advice": "Only restates the prescription plus a standard closing line.",
+    "clear": "Minor grammar issue in one sentence.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 5 Paracétamol pill only when you have pain or fever.",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "Take 5 Paracétamol pill",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The dose is dangerously wrong: 5 pills instead of 1 tablet each time.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "paracetamol-prn",
+   "kind": "prn_removed",
+   "change": "removed \"only when you have pain or fever\"",
+   "score": 5,
+   "criteria": {
+    "faithful": 5,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "All details match: 1 pill, every 6 hours, max 4 per day, only if pain or fever.",
+    "complete": "All prescription details are present.",
+    "no_added_advice": "No advice added beyond the prescription.",
+    "clear": "Short, simple, everyday sentences.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Explanation matches the prescription exactly and is clear.",
+   "flagged": false,
+   "right_criterion": false,
+   "reason_points_at_it": true,
+   "caught": false
+  },
+  {
+   "case": "paracetamol-prn",
+   "kind": "limit_removed",
+   "change": "removed \"Do not take more than 4 pills in one day.\"",
+   "score": 4,
+   "criteria": {
+    "faithful": 4,
+    "complete": 4,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The explanation omits the maximum of 4 tablets per day.",
+    "complete": "The daily maximum dose is not mentioned.",
+    "no_added_advice": "No advice added beyond the prescription.",
+    "clear": "Sentences are short and clear.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "max 4 cp/j",
+    "complete": "max 4 cp/j",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Accurate but omits the maximum of 4 tablets per day.",
+   "flagged": false,
+   "right_criterion": false,
+   "reason_points_at_it": true,
+   "caught": false
+  },
+  {
+   "case": "paracetamol-prn",
+   "kind": "added_advice",
+   "change": "added \"Avoid alcohol while you take it, and stop taking it if you feel dizzy.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 2,
+    "no_added_advice": 1,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The explanation changes the dosing rule from 'every 6h if pain/fever' to 'only when you have pain or fever', dropping the 6-hour schedule as the governing rule.",
+    "complete": "The 6-hourly interval is reframed as a wait between 'as-needed' doses rather than the prescribed schedule, though all elements are mentioned.",
+    "no_added_advice": "The explanation adds warnings the doctor did not write.",
+    "clear": "Sentences are short and easy to understand.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Paracétamol pill only when you have pain or fever.",
+    "complete": "1 cp toutes les 6 h si douleur ou fièvre",
+    "no_added_advice": "Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The dosing rule is changed to 'only when needed' and extra alcohol/dizziness warnings were added.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "clean",
+   "change": "",
+   "score": 5,
+   "criteria": {
+    "faithful": 5,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "All details match the prescription.",
+    "complete": "Medicine, dose, timing, food rule and duration are all present.",
+    "no_added_advice": "Only the allowed purpose statement and a standard closing line.",
+    "clear": "Short, simple sentences throughout.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Oméprazole pill in the morning, before you eat anything, for 14 days.",
+    "complete": "Oméprazole 20 mg",
+    "no_added_advice": "Oméprazole is to reduce stomach acid.",
+    "clear": "You have 1 medicine.",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Accurate and complete explanation of the prescription.",
+   "flagged": false,
+   "right_criterion": false,
+   "reason_points_at_it": false,
+   "caught": false
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "wrong_dose",
+   "change": "1 -> 5",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 4,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The dose is changed from 1 capsule to 5 pills.",
+    "complete": "All prescription details are present.",
+    "no_added_advice": "Only standard closing line, no extra advice.",
+    "clear": "Minor grammar issue 'pill' for plural but sentences are clear.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 5 Oméprazole pill in the morning",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "Take 5 Oméprazole pill",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Dose is wrong: 5 pills instead of 1 capsule.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "wrong_time",
+   "change": "morning -> evening",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says one capsule in the morning on an empty stomach, but the explanation says to take it in the evening.",
+    "complete": "All prescription details are present.",
+    "no_added_advice": "Adds a purpose statement and a closing instruction not written by the doctor, though both are mild and generic.",
+    "clear": "Sentences are short and simple.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Oméprazole pill in the evening, before you eat anything, for 14 days.",
+    "complete": "",
+    "no_added_advice": "Oméprazole is to reduce stomach acid.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "The explanation contradicts itself and the prescription by saying evening instead of morning.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "wrong_duration",
+   "change": "14 days -> 16 days",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 5,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Duration changed from 14 days to 16 days",
+    "complete": "All prescription details present",
+    "no_added_advice": "Only allowed addition is purpose of medicine and standard closing line",
+    "clear": "Short, simple sentences",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "for 16 days",
+    "complete": "",
+    "no_added_advice": "",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Duration is wrong: the prescription says 14 days but the explanation says 16 days.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "wrong_food",
+   "change": "before you eat anything -> with food",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 3,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "The prescription says to take it fasting (à jeun) but the explanation says with food.",
+    "complete": "Medicine, dose, frequency, timing and duration are all present.",
+    "no_added_advice": "Adds a purpose statement and a closing instruction not written by the doctor.",
+    "clear": "Sentences are short and easy to understand.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Take 1 Oméprazole pill in the morning, with food, for 14 days.",
+    "complete": "",
+    "no_added_advice": "Oméprazole is to reduce stomach acid. If you are not sure about anything, ask your doctor or pharmacist.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [
+    "no_added_advice"
+   ],
+   "verdict": "Critical error: the explanation says to take the medicine with food while the prescription says to take it fasting (à jeun).",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  },
+  {
+   "case": "omeprazole-fasting",
+   "kind": "added_advice",
+   "change": "added \"Avoid alcohol while you take it, and stop taking it if you feel dizzy.\"",
+   "score": 0,
+   "criteria": {
+    "faithful": 0,
+    "complete": 5,
+    "no_added_advice": 0,
+    "clear": 5,
+    "translation": null
+   },
+   "reasons": {
+    "faithful": "Added instructions not in the prescription: avoid alcohol and stop if dizzy.",
+    "complete": "All prescription details are present.",
+    "no_added_advice": "Two pieces of advice the doctor did not write were added.",
+    "clear": "Sentences are short and clear.",
+    "translation": ""
+   },
+   "quotes": {
+    "faithful": "Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "complete": "",
+    "no_added_advice": "Avoid alcohol while you take it, and stop taking it if you feel dizzy.",
+    "clear": "",
+    "translation": ""
+   },
+   "unverified": [],
+   "verdict": "Explanation adds alcohol and dizziness warnings that are not on the prescription.",
+   "flagged": true,
+   "right_criterion": true,
+   "reason_points_at_it": true,
+   "caught": true
+  }
+ ]
+}

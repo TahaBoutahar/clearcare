@@ -1,0 +1,890 @@
+{
+ "meta": {
+  "started": "2026-10-15T14:35:45",
+  "duration_s": 93.1,
+  "provider": "amd",
+  "model": "MiniCPM5-2B",
+  "cold_cache": false,
+  "no_purpose": true,
+  "cases_file": "cases.jsonl"
+ },
+ "summary": {
+  "cases": 6,
+  "cases_fully_correct": 3,
+  "checks": {
+   "passed": 42,
+   "total": 46,
+   "rate": 0.913
+  },
+  "by_group": {
+   "medicines": {
+    "passed": 12,
+    "total": 12,
+    "rate": 1.0
+   },
+   "fields": {
+    "passed": 17,
+    "total": 19,
+    "rate": 0.895
+   },
+   "review": {
+    "passed": 4,
+    "total": 5,
+    "rate": 0.8
+   },
+   "safety": {
+    "passed": 5,
+    "total": 5,
+    "rate": 1.0
+   },
+   "refusal": {
+    "passed": 0,
+    "total": 1,
+    "rate": 0.0
+   },
+   "illness": {
+    "passed": 1,
+    "total": 1,
+    "rate": 1.0
+   },
+   "wording": {
+    "passed": 3,
+    "total": 3,
+    "rate": 1.0
+   }
+  },
+  "by_field": {
+   "amount": {
+    "passed": 6,
+    "total": 6,
+    "rate": 1.0
+   },
+   "times_per_day": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   },
+   "times_of_day": {
+    "passed": 0,
+    "total": 1,
+    "rate": 0.0
+   },
+   "food": {
+    "passed": 1,
+    "total": 1,
+    "rate": 1.0
+   },
+   "duration": {
+    "passed": 3,
+    "total": 3,
+    "rate": 1.0
+   },
+   "prn": {
+    "passed": 3,
+    "total": 4,
+    "rate": 0.75
+   },
+   "max_per_day": {
+    "passed": 1,
+    "total": 1,
+    "rate": 1.0
+   },
+   "every_hours": {
+    "passed": 1,
+    "total": 1,
+    "rate": 1.0
+   }
+  },
+  "by_category": {
+   "simple": {
+    "passed": 0,
+    "total": 1
+   },
+   "when needed": {
+    "passed": 1,
+    "total": 1
+   },
+   "illness + several medicines": {
+    "passed": 0,
+    "total": 1
+   },
+   "uncertain": {
+    "passed": 0,
+    "total": 1
+   },
+   "English / Latin abbreviations": {
+    "passed": 1,
+    "total": 1
+   },
+   "high risk": {
+    "passed": 1,
+    "total": 1
+   }
+  },
+  "privacy_leaks": 0,
+  "unsupported_numbers": 0,
+  "review_flag": {
+   "missed": 0,
+   "needless": 1
+  },
+  "time_to_dosing_s": {
+   "mean": 15.86,
+   "median": 2.49,
+   "p95": 67.86,
+   "max": 67.86
+  },
+  "time_total_s": {
+   "mean": 15.86,
+   "median": 2.49,
+   "p95": 67.86,
+   "max": 67.86
+  },
+  "reading_grade": {
+   "mean": 5.0,
+   "max": 7.0
+  },
+  "words_per_explanation": 71
+ },
+ "results": [
+  {
+   "id": "amox-simple",
+   "category": "simple",
+   "input": "Amoxicilline 1 g : 1 cp x 2/j pendant 7 jours, au milieu des repas.",
+   "sent_to_ai": "Amoxicilline 1 g : 1 cp x 2/j pendant 7 jours, au milieu des repas.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amoxicilline: found",
+     "ok": true,
+     "expected": "amoxicilline",
+     "got": "Amoxicilline 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: times_per_day",
+     "ok": true,
+     "expected": 2,
+     "got": 2
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicilline: prn",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": false,
+     "expected": false,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Amoxicilline 1 g\n   Take 1 Amoxicilline pill at noon, with food, for 7 days.\n   Sorry, I am not sure about how many times a day to take it. Why: the prescription seems to say 2 times a day, but names 1 time(s) of the day. Please ask your doctor or pharmacist.\n\nWhen to take them each day\n   Noon: Amoxicilline 1 g (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: I am not sure about 1 thing.",
+    "   NOT SURE   Amoxicilline 1 g: how many times a day to take it (the prescription seems to say 2 times a day, but names 1 time(s) of the day).",
+    "   CORRECTED  Amoxicilline 1 g: what it is for (I could not look up what this medicine is used for)."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicilline 1 g",
+      "common_name": "amoxicillin",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "noon"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "unsure",
+        "what": "how many times a day to take it",
+        "why": "the prescription seems to say 2 times a day, but names 1 time(s) of the day"
+       },
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 5.44,
+   "time_total": 5.44,
+   "needs_review": true,
+   "reading_grade": 4.5
+  },
+  {
+   "id": "paracetamol-prn",
+   "category": "when needed",
+   "input": "Paracétamol 1 g : 1 cp toutes les 6 h si douleur ou fièvre, max 4 cp/j.",
+   "sent_to_ai": "Paracétamol 1 g : 1 cp toutes les 6 h si douleur ou fièvre, max 4 cp/j.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "paracetamol: found",
+     "ok": true,
+     "expected": "paracetamol",
+     "got": "Paracétamol 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: prn",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: max_per_day",
+     "ok": true,
+     "expected": "4 tablets",
+     "got": "4 tablets"
+    },
+    {
+     "group": "fields",
+     "name": "paracetamol: every_hours",
+     "ok": true,
+     "expected": 6,
+     "got": 6
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Paracétamol 1 g\n   Take 1 Paracétamol pill only when you have pain or fever, up to 4 times a day.\n   Wait at least 6 hours before you take another one.\n   Do not take more than 4 pills in one day.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Paracétamol 1 g: what it is for (I could not look up what this medicine is used for)."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Paracétamol 1 g",
+      "common_name": "paracetamol",
+      "form": "tablet",
+      "strength": "1 g",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 4,
+      "times_of_day": [
+       "morning",
+       "noon",
+       "evening",
+       "bedtime"
+      ],
+      "every_hours": 6,
+      "food": null,
+      "duration": null,
+      "only_when_needed": true,
+      "needed_for": "pain or fever",
+      "max_per_day": "4 tablets",
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 2.49,
+   "time_total": 2.49,
+   "needs_review": false,
+   "reading_grade": 3.8
+  },
+  {
+   "id": "angine-full",
+   "category": "illness + several medicines",
+   "input": "Diagnostic : Angine bactérienne avec fièvre\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre ou douleur, max 3 cp/j.\n3) Strepsils : 1 pastille à sucer 3 fois par jour si mal de gorge.\nBoire beaucoup d'eau. Repos 3 jours. Revoir dans 10 jours si pas d'amélioration.",
+   "sent_to_ai": "Diagnostic : Angine bactérienne avec fièvre\n1) Amoxicilline 1 g : 1 cp matin et soir pendant 8 jours, au milieu des repas.\n2) Paracétamol 1 g : 1 cp toutes les 6 h si fièvre ou douleur, max 3 cp/j.\n3) Strepsils : 1 pastille à sucer 3 fois par jour si mal de gorge.\nBoire beaucoup d'eau. Repos 3 jours. Revoir dans 10 jours si pas d'amélioration.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "refusal",
+     "name": "explains a real prescription",
+     "ok": false,
+     "expected": "an explanation",
+     "got": "Sorry, I could not reach the AI service (amd). Why: Error code: 429 - {'detail': {'error': {'message': 'Model API rate limit exceeded; please retry later', 'type': 'rate_limit_error', 'code': 'token_concurrency_rate_limit_exceeded'}}}"
+    }
+   ],
+   "error": "Sorry, I could not reach the AI service (amd). Why: Error code: 429 - {'detail': {'error': {'message': 'Model API rate limit exceeded; please retry later', 'type': 'rate_limit_error', 'code': 'token_concurrency_rate_limit_exceeded'}}}",
+   "output": "",
+   "review": [],
+   "structured": null,
+   "time_to_dosing": null,
+   "time_total": 13.75
+  },
+  {
+   "id": "unclear-dose",
+   "category": "uncertain",
+   "input": "Diagnostic : Bronchite\n1) Augmentin 1 g : 1 sachet matin et soir pendant 7 jours.\n2) Toplexil sirop : c. à s. ???\n3) Ventoline : 2 bouffées si gêne respiratoire.\nRevoir si pas d'amélioration.",
+   "sent_to_ai": "Diagnostic : Bronchite\n1) Augmentin 1 g : 1 sachet matin et soir pendant 7 jours.\n2) Toplexil sirop : c. à s. ???\n3) Ventoline : 2 bouffées si gêne respiratoire.\nRevoir si pas d'amélioration.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "augmentin: found",
+     "ok": true,
+     "expected": "augmentin",
+     "got": "Augmentin 1 g"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: amount",
+     "ok": true,
+     "expected": "1 sachet",
+     "got": "1 sachet"
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: times_of_day",
+     "ok": false,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "noon"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "augmentin: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "medicines",
+     "name": "toplexil: found",
+     "ok": true,
+     "expected": "toplexil",
+     "got": "Toplexil sirop"
+    },
+    {
+     "group": "medicines",
+     "name": "ventoline: found",
+     "ok": true,
+     "expected": "ventoline",
+     "got": "Ventoline"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: amount",
+     "ok": true,
+     "expected": "2 puffs",
+     "got": "2 puffs"
+    },
+    {
+     "group": "fields",
+     "name": "ventoline: prn",
+     "ok": false,
+     "expected": true,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /bronch/",
+     "ok": true,
+     "expected": "bronch",
+     "got": [
+      "bronchitis"
+     ]
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Bronchitis.\n\nYour medicines\nYou have 3 medicines.\n\n1. Augmentin 1 g\n   Take 1 sachet of Augmentin in the morning and at noon, for 7 days.\n\n2. Toplexil sirop\n   Take ??? of Toplexil sirop.\n   Sorry, I am not sure about how often to take it. Why: how many times a day is not written on the prescription. Please ask your doctor or pharmacist.\n\n3. Ventoline\n   Take 2 puffs of Ventoline.\n   Sorry, I am not sure about how often to take it. Why: how many times a day is not written on the prescription. Please ask your doctor or pharmacist.\n\nYour doctor also says\n   Revisit if no improvement.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: I am not sure about 2 things.",
+    "   NOT SURE   Toplexil sirop: how often to take it (how many times a day is not written on the prescription).",
+    "   NOT SURE   Ventoline: how often to take it (how many times a day is not written on the prescription).",
+    "   CORRECTED  Augmentin 1 g: what it is for (I could not look up what this medicine is used for).",
+    "   CORRECTED  Toplexil sirop: what it is for (I could not look up what this medicine is used for).",
+    "   CORRECTED  Ventoline: what it is for (I could not look up what this medicine is used for)."
+   ],
+   "structured": {
+    "conditions": [
+     "bronchitis"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Augmentin 1 g",
+      "common_name": "amoxicillin",
+      "form": "sachet",
+      "strength": "1 g",
+      "amount_per_dose": "1 sachet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "noon"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Toplexil sirop",
+      "common_name": "acetaminophen",
+      "form": "syrup",
+      "strength": null,
+      "amount_per_dose": "???",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "unsure",
+        "what": "how often to take it",
+        "why": "how many times a day is not written on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     },
+     {
+      "name_as_written": "Ventoline",
+      "common_name": "salbutamol",
+      "form": "inhaler",
+      "strength": null,
+      "amount_per_dose": "2 puffs",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": null,
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "unsure",
+        "what": "how often to take it",
+        "why": "how many times a day is not written on the prescription"
+       },
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": "Revisit if no improvement.",
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 67.86,
+   "time_total": 67.86,
+   "needs_review": true,
+   "reading_grade": 4.8
+  },
+  {
+   "id": "english-latin",
+   "category": "English / Latin abbreviations",
+   "input": "Amoxicillin 500 mg 1 cap PO TID x 7 days",
+   "sent_to_ai": "Amoxicillin 500 mg 1 cap PO TID x 7 days",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "amoxicillin: found",
+     "ok": true,
+     "expected": "amoxicillin",
+     "got": "Amoxicillin 500 mg"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: amount",
+     "ok": true,
+     "expected": "1 capsule",
+     "got": "1 capsule"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: times_per_day",
+     "ok": true,
+     "expected": 3,
+     "got": 3
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: duration",
+     "ok": true,
+     "expected": "7 days",
+     "got": "7 days"
+    },
+    {
+     "group": "fields",
+     "name": "amoxicillin: prn",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "no needless review flag",
+     "ok": true,
+     "expected": false,
+     "got": false
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Amoxicillin 500 mg\n   Take 1 Amoxicillin pill in the morning, at noon and in the evening, for 7 days.\n\nWhen to take them each day\n   Morning: Amoxicillin 500 mg (1 pill)\n   Noon: Amoxicillin 500 mg (1 pill)\n   Evening: Amoxicillin 500 mg (1 pill)\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   CORRECTED  Amoxicillin 500 mg: food (removed \"with food\": the prescription does not mention meals for this medicine).",
+    "   CORRECTED  Amoxicillin 500 mg: what it is for (I could not look up what this medicine is used for)."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Amoxicillin 500 mg",
+      "common_name": "amoxicillin",
+      "form": "capsule",
+      "strength": "500 mg",
+      "amount_per_dose": "1 capsule",
+      "times_per_day": 3,
+      "times_of_day": [
+       "morning",
+       "noon",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "7 days",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "note",
+        "what": "food",
+        "why": "removed \"with food\": the prescription does not mention meals for this medicine"
+       },
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 1.46,
+   "time_total": 1.46,
+   "needs_review": false,
+   "reading_grade": 7.0
+  },
+  {
+   "id": "methotrexate-weekly",
+   "category": "high risk",
+   "input": "Méthotrexate 10 mg : 1 cp une fois par semaine, le lundi.",
+   "sent_to_ai": "Méthotrexate 10 mg : 1 cp une fois par semaine, le lundi.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "methotrexate: found",
+     "ok": true,
+     "expected": "methotrexate",
+     "got": "Méthotrexate 10 mg"
+    },
+    {
+     "group": "fields",
+     "name": "methotrexate: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "review",
+     "name": "asks the doctor to check",
+     "ok": true,
+     "expected": true,
+     "got": true
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    },
+    {
+     "group": "wording",
+     "name": "says \"week\"",
+     "ok": true,
+     "expected": "week",
+     "got": "present"
+    },
+    {
+     "group": "wording",
+     "name": "never says \"once a day\"",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    },
+    {
+     "group": "wording",
+     "name": "never says \"times a day\"",
+     "ok": true,
+     "expected": "absent",
+     "got": "absent"
+    }
+   ],
+   "error": null,
+   "output": "Your medicines\nYou have 1 medicine.\n\n1. Méthotrexate 10 mg\n   Take 1 Méthotrexate pill once a week, on Monday, for 1 week.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   CHECK BEFORE GIVING THIS TO THE PATIENT: it contains a high-risk medicine.",
+    "   HIGH RISK  Méthotrexate 10 mg: high-risk medicine (methotrexate is taken once a WEEK; taking it daily is dangerous).",
+    "   CORRECTED  Méthotrexate 10 mg: weekly (read \"une fois par semaine\" as 1 time(s) a week).",
+    "   CORRECTED  Méthotrexate 10 mg: what it is for (I could not look up what this medicine is used for)."
+   ],
+   "structured": {
+    "conditions": [],
+    "medicines": [
+     {
+      "name_as_written": "Méthotrexate 10 mg",
+      "common_name": "methotrexate",
+      "form": "tablet",
+      "strength": "10 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": null,
+      "times_of_day": [],
+      "every_hours": null,
+      "food": null,
+      "duration": "1 week",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": 1,
+      "weekday": "Monday",
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": null,
+      "issues": [
+       {
+        "level": "note",
+        "what": "weekly",
+        "why": "read \"une fois par semaine\" as 1 time(s) a week"
+       },
+       {
+        "level": "risk",
+        "what": "high-risk medicine",
+        "why": "methotrexate is taken once a WEEK; taking it daily is dangerous"
+       },
+       {
+        "level": "note",
+        "what": "what it is for",
+        "why": "I could not look up what this medicine is used for"
+       }
+      ]
+     }
+    ],
+    "doctor_instructions": [],
+    "follow_up": null,
+    "issues": [],
+    "privacy_removed": []
+   },
+   "time_to_dosing": 2.06,
+   "time_total": 2.06,
+   "needs_review": true,
+   "reading_grade": 4.7
+  }
+ ]
+}

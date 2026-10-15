@@ -1,5 +1,5 @@
 """
-AMD Full stack — dashboard backend for the prescription explainer.
+AMD Full stack — dashboard backend for ClearCare.
 
 Shows what the pipeline does and how well it does it:
     GET  /api/config               provider, model, number of benchmark cases
@@ -8,6 +8,8 @@ Shows what the pipeline does and how well it does it:
     POST /api/benchmark            start a benchmark run in the background
     GET  /api/benchmark/status     live progress of that run
     POST /api/explain              explain one prescription, streamed as JSON lines
+    POST /api/translate            the patient sheet in another language (9 of them) and the judge's rating
+    GET  /api/judge                how well the judge catches planted errors (judge-the-judge runs)
 
 The pipeline itself is the project this folder sits in (PIPELINE_DIR, by default the parent
 folder); nothing is copied here.
@@ -18,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -44,7 +47,7 @@ logging.basicConfig(level=logging.ERROR)
 for noisy in ("httpx", "httpx2", "openai"):
     logging.getLogger(noisy).setLevel(logging.WARNING)
 
-app = FastAPI(title="AMD Full stack — Prescription Explainer dashboard")
+app = FastAPI(title="AMD Full stack — ClearCare dashboard")
 
 # One run at a time: the pipeline's provider/model is process-wide.
 _job_lock = threading.Lock()
@@ -62,6 +65,35 @@ class BenchmarkRequest(BaseModel):
 class ExplainRequest(BaseModel):
     text: str
     provider: str | None = None
+
+
+class TranslateRequest(BaseModel):
+    prescription: str
+    english: str
+    extraction: dict
+    lang: str = "ary"
+    judge: bool = True
+
+
+# The translation module (local only) has its own Python with torch; it runs as a worker process
+# that stays up, so the translation model loads once.
+TRANSLATION_DIR = PIPELINE_DIR / "translation-pipeline"
+_worker: subprocess.Popen | None = None
+_worker_lock = threading.Lock()
+
+
+def _translation_worker() -> subprocess.Popen:
+    global _worker
+    if _worker and _worker.poll() is None:
+        return _worker
+    python = TRANSLATION_DIR / ".venv" / "bin" / "python"
+    if not python.exists():
+        raise HTTPException(501, f"The translation module is not set up on this computer ({python} is missing)")
+    _worker = subprocess.Popen([str(python), "worker.py"], cwd=TRANSLATION_DIR, text=True, encoding="utf-8",
+                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    if json.loads(_worker.stdout.readline() or "{}").get("ready") is not True:
+        raise HTTPException(500, "The translation worker did not start")
+    return _worker
 
 
 def _use(provider: str | None, model: str | None = None) -> None:
@@ -170,10 +202,15 @@ def explain(req: ExplainRequest):
         try:
             for event in pipeline.stream_prescription(req.text):
                 elapsed = round(time.monotonic() - start, 2)
-                if event["type"] == "dosing":
+                if event["type"] == "medicine_ready":
+                    yield json.dumps({
+                        "type": "medicine_ready", "elapsed": elapsed, "index": event["index"],
+                        "lines": pipeline.render_medicine(event["index"] + 1, event["medicine"], part="dosing"),
+                    }, ensure_ascii=False) + "\n"
+                elif event["type"] == "dosing":
                     p = event["prescription"]
                     yield json.dumps({
-                        "type": "dosing", "elapsed": elapsed,
+                        "type": "dosing", "elapsed": elapsed, "replaces_stream": event.get("replaces_stream", False),
                         "illness": pipeline.render_conditions(p["conditions"]),
                         "medicines": [pipeline.render_medicine(i, m, part="dosing") for i, m in enumerate(p["medicines"], 1)],
                     }, ensure_ascii=False) + "\n"
@@ -193,6 +230,38 @@ def explain(req: ExplainRequest):
             yield json.dumps({"type": "error", "message": str(exc)}) + "\n"
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")
+
+
+@app.post("/api/translate")
+def translate(req: TranslateRequest):
+    with _worker_lock:  # one translation at a time
+        worker = _translation_worker()
+        start = time.monotonic()
+        worker.stdin.write(json.dumps({"prescription": req.prescription, "english": req.english,
+                                       "extraction": req.extraction, "lang": req.lang, "judge": req.judge},
+                                      ensure_ascii=False) + "\n")
+        worker.stdin.flush()
+        line = worker.stdout.readline()
+    if not line:
+        raise HTTPException(500, "The translation worker stopped")
+    out = json.loads(line)
+    if "error" in out:
+        raise HTTPException(500, f"Translation failed: {out['error']}")
+    out["elapsed"] = round(time.monotonic() - start, 2)
+    return out
+
+
+@app.get("/api/judge")
+def judge_runs():
+    """Judge-the-judge results: planted errors caught, false alarms, made-up reasons."""
+    out = []
+    for path in sorted((TRANSLATION_DIR / "data").glob("judge_eval_*.json"), reverse=True):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        out.append({"file": path.name, **data})
+    return out
 
 
 FRONTEND = ROOT / "frontend"

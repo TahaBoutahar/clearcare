@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install the prescription explainer as a single terminal command.
+# Install ClearCare (the prescription explainer) as a single terminal command.
 #
 #   ./install.sh            installs the command "rx"
 #   ./install.sh ordo       installs it under the name "ordo" instead
@@ -48,7 +48,7 @@ fi
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/$NAME" <<LAUNCHER
 #!/bin/sh
-# Launcher for the prescription explainer ($PROJECT_DIR). Reinstall with install.sh.
+# Launcher for ClearCare ($PROJECT_DIR). Reinstall with install.sh.
 RX_COMMAND_NAME="$NAME" exec "$PROJECT_DIR/.venv/bin/python" "$PROJECT_DIR/doctor_cli.py" "\$@"
 LAUNCHER
 chmod +x "$BIN_DIR/$NAME"

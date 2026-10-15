@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Explainer and Translator</title>
-  <link rel="stylesheet" href="/static/styles.css?v=4">
+  <title>ClearCare</title>
+  <link rel="stylesheet" href="/static/styles.css?v=7">
 </head>
 <body>
   <header class="top">
     <div>
-      <h1>Prescription Explainer and Translator</h1>
-      <p class="sub">AMD Full stack · what the pipeline does, and how well</p>
+      <h1>ClearCare</h1>
+      <p class="sub">Prescription explainer and translator · AMD Full stack: what the pipeline does, and how well</p>
     </div>
     <div id="config" class="badge">loading…</div>
   </header>
@@ -20,6 +20,7 @@
     <button role="tab" data-tab="cases">Cases</button>
     <button role="tab" data-tab="run">Run benchmark</button>
     <button role="tab" data-tab="try">Try it</button>
+    <button role="tab" data-tab="judge">Judge</button>
   </nav>
 
   <main>
@@ -85,24 +86,84 @@
           <button class="chip" data-example="unclear">Unclear dose</button>
         </div>
         <textarea id="try-input" rows="7" placeholder="Paste a prescription…"></textarea>
-        <div class="row">
+        <div class="row wrap">
           <label>Provider <select id="try-provider"></select></label>
+          <label><input type="checkbox" id="try-translate" checked> Translate and judge</label>
+          <label>Language <select id="try-lang"></select></label>
           <button id="try-go" class="primary">Explain</button>
           <span id="try-status" class="muted"></span>
         </div>
       </div>
       <div id="try-out" class="hidden">
         <div class="tiles" id="try-tiles"></div>
-        <div class="grid2">
-          <div class="card"><h2>Sent to the AI</h2><p id="try-removed" class="muted small"></p><pre id="try-sent"></pre></div>
-          <div class="card"><h2>For the doctor</h2><pre id="try-review" class="review"></pre></div>
+        <div class="steps">
+          <div class="card step" id="step-privacy">
+            <h2><span class="num">1</span>Privacy filter <span class="where">on this computer</span></h2>
+            <p id="try-removed" class="muted small"></p>
+            <pre id="try-sent"></pre>
+          </div>
+          <div class="card step" id="step-read">
+            <h2><span class="num">2</span>Read and checked, one medicine at a time <span class="where" id="read-model"></span></h2>
+            <p class="muted small">Each medicine appears as soon as the AI has written it <b>and</b> it has passed every check against the prescription.</p>
+            <div id="try-stream" class="stream"></div>
+            <p id="try-correction" class="error small hidden"></p>
+          </div>
+          <div class="grid2">
+            <div class="card step"><h2><span class="num">3</span>For the patient <span class="where">English</span></h2><pre id="try-patient"></pre></div>
+            <div class="card step"><h2><span class="num">4</span>For the doctor <span class="where">doubts and corrections</span></h2><pre id="try-review" class="review"></pre></div>
+          </div>
+          <div class="card step" id="step-translate">
+            <h2><span class="num">5</span>Translation <span class="where" id="tr-lang-name">Moroccan Darija</span></h2>
+            <p class="muted small">Doses come from fixed templates, never from a model. Only short free-text sentences are translated, and each must keep its numbers and medicine names or it stays in English.</p>
+            <p id="tr-status" class="muted"></p>
+            <div id="tr-out" class="hidden">
+              <div class="row wrap" id="tr-switch"><span class="muted small">Same sheet in:</span></div>
+              <div class="row wrap" id="tr-script">
+                <button class="chip" data-script="arabic" aria-pressed="true">Arabic script</button>
+                <button class="chip" data-script="latin" aria-pressed="false">Latin letters (Arabizi)</button>
+              </div>
+              <pre id="tr-text" dir="rtl" class="arabic"></pre>
+              <div id="tr-report" class="report"></div>
+            </div>
+          </div>
+          <div class="card step" id="step-judge">
+            <h2><span class="num">6</span>Second-model check <span class="where" id="judge-model"></span></h2>
+            <p class="muted small">A different model rates the final text from 0 to 5. It never changes it. The overall score is its lowest criterion; every deduction must quote real words.</p>
+            <p id="judge-status" class="muted"></p>
+            <div id="judge-out"></div>
+          </div>
         </div>
-        <div class="card"><h2>For the patient</h2><pre id="try-patient"></pre></div>
+      </div>
+    </section>
+    <!-- Judge -->
+    <section id="tab-judge" class="tab hidden">
+      <div class="card">
+        <h2>Judging the judge</h2>
+        <p class="muted small">Correct explanations get one known mistake planted (a dose changed, morning and evening swapped, a medicine removed, advice added…). The judge rates every version without knowing which is which. An error counts as caught only with a score of 2 or less, on the right criterion, with a reason that names it.</p>
+        <div class="row"><label>Run <select id="judge-select"></select></label><span id="judge-meta" class="muted"></span></div>
+      </div>
+      <div id="judge-empty" class="card hidden">No judge-the-judge run yet. Run <code>python judge_eval.py</code> in <code>translation-pipeline/</code>.</div>
+      <div id="judge-view">
+        <div class="tiles" id="judge-tiles"></div>
+        <div class="card"><h2>Caught, by kind of planted error</h2><div id="judge-kinds" class="bars"></div></div>
+        <div class="card table-scroll"><h2>Every rating</h2><div id="judge-rows"></div></div>
+        <div class="card">
+          <h2>Each result, explained</h2>
+          <p class="muted small">For every rating: what we changed, what a good judge should have done, what this judge did, and why it counts as caught, missed or a false alarm.</p>
+          <div class="row wrap" id="explain-filter">
+            <button class="chip" data-filter="all" aria-pressed="true">All</button>
+            <button class="chip" data-filter="missed" aria-pressed="false">Missed</button>
+            <button class="chip" data-filter="caught" aria-pressed="false">Caught</button>
+            <button class="chip" data-filter="false-alarm" aria-pressed="false">False alarms</button>
+            <button class="chip" data-filter="made-up" aria-pressed="false">Made-up reasons</button>
+          </div>
+          <div id="judge-explained" class="explained"></div>
+        </div>
       </div>
     </section>
   </main>
 
   <div id="tooltip" class="tooltip hidden" role="tooltip"></div>
-  <script src="/static/app.js?v=4"></script>
+  <script src="/static/app.js?v=7"></script>
 </body>
 </html>

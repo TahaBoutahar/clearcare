@@ -186,24 +186,34 @@ def explain(text: str) -> dict:
 
 
 def _handle(event: dict, spinner: Spinner, start: float, timings: dict) -> None:
-    if event["type"] == "dosing":
+    if event["type"] == "medicine_ready":
+        # Each medicine appears as soon as it is written and checked, like blocks of a game world loading.
+        if not timings.get("streamed"):
+            timings["first"] = time.monotonic() - start
+            print()
+            _print_lines(["How to take your medicines"])
+        timings["streamed"] = timings.get("streamed", 0) + 1
+        _print_lines(pipeline.render_medicine(event["index"] + 1, event["medicine"], part="dosing"))
+        spinner.update("Reading the next medicine…")
+
+    elif event["type"] == "dosing":
         timings["dosing"] = time.monotonic() - start
         prescription = event["prescription"]
         meds = prescription["medicines"]
+        if event.get("replaces_stream"):
+            print()
+            print(dim("Correction: the full reading changed the list above. Use this one:"))
+        if meds and (event.get("replaces_stream") or not timings.get("streamed")):
+            print()
+            _print_lines(["How to take your medicines"])
+            for i, med in enumerate(meds, 1):
+                _print_lines(pipeline.render_medicine(i, med, part="dosing"))
+        if meds:
+            count = len(meds)
+            print(dim(f"   ({count} medicine{'s' if count != 1 else ''} in total)"))
         if illness := pipeline.render_conditions(prescription["conditions"]):
             print()
             _print_lines(illness)
-        if meds:
-            count = len(meds)
-            print()
-            _print_lines([
-                "Your medicines",
-                f"You have {count} medicine{'s' if count != 1 else ''}.",
-                "",
-                "How to take them",
-            ])
-            for i, med in enumerate(meds, 1):
-                _print_lines(pipeline.render_medicine(i, med, part="dosing"))
         spinner.update("Looking up what each medicine is for…")
 
     elif event["type"] == "medicine":
@@ -223,7 +233,8 @@ def _handle(event: dict, spinner: Spinner, start: float, timings: dict) -> None:
         print()
         _print_lines(event["review"])
         total = time.monotonic() - start
-        print(dim(f"\nDosing in {timings['dosing']:.1f}s · complete in {total:.1f}s"))
+        first = f"first medicine in {timings['first']:.1f}s · " if timings.get("first") else ""
+        print(dim(f"\n{first}all dosing in {timings['dosing']:.1f}s · complete in {total:.1f}s"))
 
 
 def doctor_review(result: dict) -> None:
@@ -365,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.text:
         return run_once(" ".join(args.text), None)
 
-    print(bold("Prescription explainer") + dim(f"  ·  {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL}"))
+    print(bold("ClearCare") + dim(f"  ·  {pipeline.LLM_PROVIDER} / {pipeline.LLM_MODEL}"))
     while True:
         text = read_prescription()
         if text is None:

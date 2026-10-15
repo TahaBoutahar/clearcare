@@ -1,0 +1,303 @@
+{
+ "meta": {
+  "started": "2026-10-15T16:29:24",
+  "duration_s": 8.8,
+  "provider": "amd",
+  "model": "DeepSeek-V4-Flash",
+  "cold_cache": false,
+  "no_purpose": false,
+  "cases_file": "cases.jsonl"
+ },
+ "summary": {
+  "cases": 1,
+  "cases_fully_correct": 1,
+  "checks": {
+   "passed": 14,
+   "total": 14,
+   "rate": 1.0
+  },
+  "by_group": {
+   "medicines": {
+    "passed": 3,
+    "total": 3,
+    "rate": 1.0
+   },
+   "fields": {
+    "passed": 8,
+    "total": 8,
+    "rate": 1.0
+   },
+   "illness": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   },
+   "safety": {
+    "passed": 1,
+    "total": 1,
+    "rate": 1.0
+   }
+  },
+  "by_field": {
+   "amount": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   },
+   "times_of_day": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   },
+   "food": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   },
+   "duration": {
+    "passed": 2,
+    "total": 2,
+    "rate": 1.0
+   }
+  },
+  "by_category": {
+   "illness + several medicines": {
+    "passed": 1,
+    "total": 1
+   }
+  },
+  "privacy_leaks": 0,
+  "unsupported_numbers": 0,
+  "review_flag": {
+   "missed": 0,
+   "needless": 0
+  },
+  "time_to_first_s": {
+   "mean": 6.83,
+   "median": 6.83,
+   "p95": 6.83,
+   "max": 6.83
+  },
+  "time_to_dosing_s": {
+   "mean": 8.83,
+   "median": 8.83,
+   "p95": 8.83,
+   "max": 8.83
+  },
+  "time_total_s": {
+   "mean": 8.83,
+   "median": 8.83,
+   "p95": 8.83,
+   "max": 8.83
+  },
+  "reading_grade": {
+   "mean": 4.7,
+   "max": 4.7
+  },
+  "words_per_explanation": 121
+ },
+ "results": [
+  {
+   "id": "diabetes-hypertension",
+   "category": "illness + several medicines",
+   "input": "Diagnostic : Diabète type 2 et HTA\n1) Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.\n2) Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.\nRégime pauvre en sel et en sucre. Marcher 30 min par jour. Contrôle de la glycémie dans 1 mois.",
+   "sent_to_ai": "Diagnostic : Diabète type 2 et HTA\n1) Metformine 850 mg : 1 cp matin et soir au cours des repas. QSP 3 mois.\n2) Amlodipine 5 mg : 1 cp le matin. Traitement au long cours.\nRégime pauvre en sel et en sucre. Marcher 30 min par jour. Contrôle de la glycémie dans 1 mois.",
+   "privacy_removed": [],
+   "checks": [
+    {
+     "group": "medicines",
+     "name": "metformine: found",
+     "ok": true,
+     "expected": "metformine",
+     "got": "Metformine 850 mg"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning",
+      "evening"
+     ],
+     "got": [
+      "morning",
+      "evening"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "metformine: food",
+     "ok": true,
+     "expected": "with food",
+     "got": "with food"
+    },
+    {
+     "group": "fields",
+     "name": "metformine: duration",
+     "ok": true,
+     "expected": "3 months",
+     "got": "3 months"
+    },
+    {
+     "group": "medicines",
+     "name": "amlodipine: found",
+     "ok": true,
+     "expected": "amlodipine",
+     "got": "Amlodipine 5 mg"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: amount",
+     "ok": true,
+     "expected": "1 tablet",
+     "got": "1 tablet"
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: times_of_day",
+     "ok": true,
+     "expected": [
+      "morning"
+     ],
+     "got": [
+      "morning"
+     ]
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: food",
+     "ok": true,
+     "expected": null,
+     "got": null
+    },
+    {
+     "group": "fields",
+     "name": "amlodipine: duration",
+     "ok": true,
+     "expected": "long term",
+     "got": "long term"
+    },
+    {
+     "group": "medicines",
+     "name": "no invented medicine",
+     "ok": true,
+     "expected": "none",
+     "got": "none"
+    },
+    {
+     "group": "illness",
+     "name": "illness /diabet/",
+     "ok": true,
+     "expected": "diabet",
+     "got": [
+      "type 2 diabetes",
+      "high blood pressure"
+     ]
+    },
+    {
+     "group": "illness",
+     "name": "illness /blood pressure|hypertension/",
+     "ok": true,
+     "expected": "blood pressure|hypertension",
+     "got": [
+      "type 2 diabetes",
+      "high blood pressure"
+     ]
+    },
+    {
+     "group": "safety",
+     "name": "no number that is not on the prescription",
+     "ok": true,
+     "expected": [],
+     "got": []
+    }
+   ],
+   "error": null,
+   "output": "Your illness\n   Type 2 diabetes and high blood pressure.\n\nYour medicines\nYou have 2 medicines.\n\n1. Metformine 850 mg\n   Metformine is to lower sugar in your blood.\n   Take 1 Metformine pill in the morning and in the evening, with food, for 3 months.\n\n2. Amlodipine 5 mg\n   Amlodipine is to lower blood pressure.\n   Take 1 Amlodipine pill in the morning.\n   This is a long-term treatment.\n\nWhen to take them each day\n   Morning: Metformine 850 mg (1 pill), Amlodipine 5 mg (1 pill)\n   Evening: Metformine 850 mg (1 pill)\n\nYour doctor also says\n   Follow a low-salt and low-sugar diet.\n   Walk 30 minutes per day.\n   Check blood sugar in 1 month.\n\nIf you are not sure about anything, ask your doctor or pharmacist.",
+   "review": [
+    "For the doctor: please review",
+    "   Everything on the prescription was understood.",
+    "   AI-ADDED   The lines saying what each medicine is for are not on the prescription: please check them."
+   ],
+   "structured": {
+    "conditions": [
+     "type 2 diabetes",
+     "high blood pressure"
+    ],
+    "medicines": [
+     {
+      "name_as_written": "Metformine 850 mg",
+      "common_name": "metformin",
+      "form": "tablet",
+      "strength": "850 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 2,
+      "times_of_day": [
+       "morning",
+       "evening"
+      ],
+      "every_hours": null,
+      "food": "with food",
+      "duration": "3 months",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": "to lower sugar in your blood",
+      "issues": [],
+      "_checked": true
+     },
+     {
+      "name_as_written": "Amlodipine 5 mg",
+      "common_name": "amlodipine",
+      "form": "tablet",
+      "strength": "5 mg",
+      "amount_per_dose": "1 tablet",
+      "times_per_day": 1,
+      "times_of_day": [
+       "morning"
+      ],
+      "every_hours": null,
+      "food": null,
+      "duration": "long term",
+      "only_when_needed": false,
+      "needed_for": null,
+      "max_per_day": null,
+      "route": null,
+      "times_per_week": null,
+      "weekday": null,
+      "times_per_day_range": null,
+      "single_dose": false,
+      "purpose": "to lower blood pressure",
+      "issues": [],
+      "_checked": true
+     }
+    ],
+    "doctor_instructions": [
+     "Follow a low-salt and low-sugar diet.",
+     "Walk 30 minutes per day."
+    ],
+    "follow_up": "Check blood sugar in 1 month.",
+    "issues": [],
+    "privacy_removed": [],
+    "invented_medicines": 0
+   },
+   "time_to_first": 6.83,
+   "time_to_dosing": 8.83,
+   "time_total": 8.83,
+   "needs_review": false,
+   "reading_grade": 4.7
+  }
+ ]
+}

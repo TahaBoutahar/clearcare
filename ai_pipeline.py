@@ -1,5 +1,5 @@
 """
-ai_pipeline.py — Medical prescription explainer pipeline (AMD Developer Hackathon ACT III).
+ai_pipeline.py — ClearCare: medical prescription explainer pipeline (AMD Developer Hackathon ACT III).
 
 Flow:
     voice -> transcribe_voice (faster-whisper) -> text
@@ -42,6 +42,7 @@ import logging
 import os
 import re
 import threading
+import unicodedata
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
@@ -57,26 +58,26 @@ logger = logging.getLogger(__name__)
 # Configuration
 # --------------------------------------------------------------------------- #
 
-AMD_BASE_URL = os.getenv("AMD_BASE_URL", "https://developer.amd.com.cn/radeon/api/v1")
-AMD_MODEL = os.getenv("AMD_MODEL", "amd/DeepSeek-V4-Flash")
+AMD_BASE_URL = os.getenv("AMD_BASE_URL") or "https://developer.amd.com.cn/radeon/api/v1"
+AMD_MODEL = os.getenv("AMD_MODEL") or "DeepSeek-V4.1-Flash"
 
 # Provider -> (base URL, API key env var or None, default model).
 # All are OpenAI-compatible, so the same SDK client works for each.
 _PROVIDERS: dict[str, tuple[str, str | None, str]] = {
     "amd": (AMD_BASE_URL, "AMD_API_KEY", AMD_MODEL),
     "ollama": (
-        os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        os.getenv("OLLAMA_BASE_URL") or "http://localhost:11434/v1",
         None,  # local, no key needed
-        os.getenv("OLLAMA_MODEL", "hf.co/NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M"),
+        os.getenv("OLLAMA_MODEL") or "hf.co/NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M",
     ),
     "openrouter": (
         "https://openrouter.ai/api/v1",
         "OPENROUTER_API_KEY",
-        os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+        os.getenv("OPENROUTER_MODEL") or "meta-llama/llama-3.3-70b-instruct:free",
     ),
 }
 
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "amd").strip().lower()
+LLM_PROVIDER = (os.getenv("LLM_PROVIDER") or "amd").strip().lower()
 if LLM_PROVIDER not in _PROVIDERS:
     raise ValueError(f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. Use one of: {', '.join(_PROVIDERS)}")
 LLM_MODEL = os.getenv("LLM_MODEL") or _PROVIDERS[LLM_PROVIDER][2]
@@ -99,7 +100,8 @@ WHISPER_MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "small")
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "auto")
 
 # gTTS language codes for the (currently optional) audio output.
-_TTS_LANGUAGE_CODES = {"english": "en", "french": "fr", "arabic": "ar", "spanish": "es", "german": "de"}
+_TTS_LANGUAGE_CODES = {"english": "en", "french": "fr", "arabic": "ar", "spanish": "es", "german": "de",
+                       "portuguese": "pt", "italian": "it", "dutch": "nl", "turkish": "tr"}
 
 DISCLAIMER = "If you are not sure about anything, ask your doctor or pharmacist."
 
@@ -120,7 +122,60 @@ def _get_llm_client() -> OpenAI:
     api_key = os.getenv(key_env)
     if not api_key:
         raise PipelineError(f"{key_env} environment variable is not set (LLM_PROVIDER={LLM_PROVIDER}).")
-    return OpenAI(api_key=api_key, base_url=base_url)
+    # On "429 too many requests" the SDK waits (exponential backoff, honours Retry-After) and retries.
+    return OpenAI(api_key=api_key, base_url=base_url, max_retries=6, timeout=120)
+
+
+# --------------------------------------------------------------------------- #
+# Daily spending guard for paid providers (AMD: a daily budget shared by everyone using the key)
+# --------------------------------------------------------------------------- #
+
+USAGE_PATH = Path(__file__).parent / ".cache" / "ai_usage.json"
+_usage_lock = threading.Lock()
+
+
+def _budget_day() -> str:
+    """AMD's day resets at 17:00 Asia/Shanghai (10:00 in Morocco)."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    now = datetime.now(ZoneInfo("Asia/Shanghai")) - timedelta(hours=17)
+    return now.strftime("%Y-%m-%d")
+
+
+def daily_limit(provider: str) -> int:
+    """Token limit per day for a provider (0 = no limit). Set e.g. AMD_DAILY_TOKEN_LIMIT=100000."""
+    try:
+        return int(os.getenv(f"{provider.upper()}_DAILY_TOKEN_LIMIT") or 0)
+    except ValueError:
+        return 0
+
+
+def tokens_used_today(provider: str) -> int:
+    try:
+        data = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0
+    return int(data.get(_budget_day(), {}).get(provider, 0))
+
+
+def record_usage(provider: str, tokens: int) -> None:
+    if not tokens:
+        return
+    with _usage_lock:
+        try:
+            data = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {}
+        day = data.setdefault(_budget_day(), {})
+        day[provider] = int(day.get(provider, 0)) + int(tokens)
+        USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        USAGE_PATH.write_text(json.dumps(data, indent=1), encoding="utf-8")
+
+
+def budget_left(provider: str) -> int | None:
+    """Tokens left today, or None when there is no limit."""
+    limit = daily_limit(provider)
+    return None if not limit else max(0, limit - tokens_used_today(provider))
 
 
 @lru_cache(maxsize=1)
@@ -156,26 +211,87 @@ def _chat(
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
 
+    provider, client = _pick_client(kwargs)
+
     try:
         try:
-            response = _get_llm_client().chat.completions.create(**kwargs)
+            response = client.chat.completions.create(**kwargs)
         except BadRequestError:
             if not json_mode:
                 raise
             # Some endpoints don't support response_format; the prompt still asks for JSON.
             kwargs.pop("response_format")
-            response = _get_llm_client().chat.completions.create(**kwargs)
+            response = client.chat.completions.create(**kwargs)
     except PipelineError:
         raise
     except Exception as exc:  # network / auth / rate-limit errors from the SDK
         raise PipelineError(f"Sorry, I could not reach the AI service ({LLM_PROVIDER}). Why: {exc}") from exc
 
+    if _PROVIDERS[provider][1] is not None:  # paid / keyed providers are counted against the daily budget
+        record_usage(provider, getattr(getattr(response, "usage", None), "total_tokens", 0) or 0)
     content = (response.choices[0].message.content or "").strip()
     # Reasoning models sometimes inline their chain of thought; strip it.
     content = _THINK_RE.sub("", content).strip()
     if not content:
         raise PipelineError(f"Sorry, the AI service ({LLM_PROVIDER}) sent back an empty answer. Please try again.")
     return content
+
+
+def _chat_stream(system_prompt: str, user_prompt: str, json_mode: bool = False, max_tokens: int | None = None):
+    """Like _chat(), but yields the answer piece by piece as the model writes it."""
+    kwargs = {
+        "model": LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.0,
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    if max_tokens:
+        kwargs["max_tokens"] = max_tokens
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+    provider, client = _pick_client(kwargs)
+
+    try:
+        try:
+            stream = client.chat.completions.create(**kwargs)
+        except BadRequestError:
+            # Some endpoints don't support response_format or usage in streams; the prompt still asks for JSON.
+            kwargs.pop("response_format", None)
+            kwargs.pop("stream_options", None)
+            stream = client.chat.completions.create(**kwargs)
+        tokens = 0
+        for chunk in stream:
+            if getattr(chunk, "usage", None):
+                tokens = chunk.usage.total_tokens or 0
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+    except PipelineError:
+        raise
+    except Exception as exc:
+        raise PipelineError(f"Sorry, I could not reach the AI service ({LLM_PROVIDER}). Why: {exc}") from exc
+    if _PROVIDERS[provider][1] is not None:
+        record_usage(provider, tokens)
+
+
+def _pick_client(kwargs: dict):
+    """The configured client, or the fallback provider when today's budget is used up."""
+    provider, client = LLM_PROVIDER, None
+    if budget_left(provider) == 0:
+        fallback = (os.getenv(f"{provider.upper()}_FALLBACK") or "").strip().lower()
+        if fallback in _PROVIDERS and fallback != provider and budget_left(fallback) != 0:
+            logger.warning("Daily %s budget used up: using %s for this call", provider, fallback)
+            base_url, key_env, model = _PROVIDERS[fallback]
+            client = OpenAI(api_key=os.getenv(key_env) if key_env else "not-needed", base_url=base_url)
+            provider, kwargs["model"] = fallback, model
+        else:
+            raise PipelineError(
+                f"Sorry, today's {provider.upper()} budget is used up ({tokens_used_today(provider)} tokens). "
+                "It refills at 10:00 Morocco time; you can also use the free local model (-p ollama).")
+    return provider, client or _get_llm_client()
 
 
 # --------------------------------------------------------------------------- #
@@ -262,16 +378,25 @@ Example output:
 {"meds":[{"name":"Ibuprofène 400 mg","generic":"ibuprofen","form":"tablet","strength":"400 mg","amount":"1 tablet","per_day":3,"food":"after food","duration":"5 days"}],"diagnosis":["throat infection"],"instructions":["Rest."],"follow_up":"See your doctor again in 1 week."}"""
 
 
-_DRUG_PURPOSE_SYSTEM_PROMPT = """Say what a medicine is used for, to a patient who may not read well.
-Use simple everyday words a child understands. No medical words (say "infection", "pain", "fever",
-"sugar in your blood", "blood pressure", "allergies", "stomach acid").
+_DRUG_PURPOSE_SYSTEM_PROMPT = """You are a careful pharmacist. Say what a medicine is used for, to a patient who may not read well.
 
-Your text is inserted into the sentence "This medicine is ___." so it must fit it, max 8 words.
-Return compact JSON only: {"purpose": "..."}
-Do not give any advice, warnings or instructions. If you are not sure, return {"purpose": null}.
+First decide honestly if you KNOW this medicine. You know it only if you are certain of its active
+ingredient. If the name is unknown to you, looks misspelled or misread, could be several different
+medicines, or you would be guessing in any way, you do NOT know it. Saying you do not know is the
+right answer then; a wrong answer can hurt the patient.
 
-Example for ibuprofen: {"purpose":"for pain, swelling and fever"}
-Example for amlodipine: {"purpose":"to lower your blood pressure"}"""
+Return compact JSON only:
+{"known": true or false,
+ "active_ingredient": "the generic name, or null if you do not know it",
+ "purpose": "what it is used for, fitting the sentence 'This medicine is ___.', max 8 words, or null"}
+
+Use simple everyday words a child understands (say "infection", "pain", "fever", "sugar in your blood",
+"blood pressure", "allergies", "stomach acid"). No advice, warnings or instructions.
+Never give a vague purpose such as "to help you feel better": if you do not know the real use, purpose is null.
+
+Example for ibuprofen: {"known":true,"active_ingredient":"ibuprofen","purpose":"for pain, swelling and fever"}
+Example for Kardegic: {"known":true,"active_ingredient":"aspirin","purpose":"to stop blood clots"}
+Example for Zorvatex: {"known":false,"active_ingredient":null,"purpose":null}"""
 
 
 _TIME_ORDER = ["morning", "noon", "evening", "bedtime"]
@@ -363,37 +488,41 @@ def _letters(text: str) -> str:
     return re.sub(r"[^a-z]", "", text.lower())
 
 
+def _normalize_med(med) -> dict | None:
+    """One medicine of the model's answer in the public shape, or None if it has no name."""
+    if not isinstance(med, dict):
+        return None
+    name = _as_str(med.get("name")) or _as_str(med.get("generic"))
+    if not name:
+        return None
+    times = {t.lower() for t in _as_list(med.get("times"))} & set(_TIME_ORDER)
+    return {
+        "name_as_written": name,
+        "common_name": (_as_str(med.get("generic")) or "").lower() or None,
+        "form": _as_str(med.get("form")),
+        "strength": _as_str(med.get("strength")),
+        "amount_per_dose": _as_str(med.get("amount")),
+        "times_per_day": _as_int(med.get("per_day")),
+        "times_of_day": sorted(times, key=_TIME_ORDER.index),
+        "every_hours": _as_int(med.get("every_h")),
+        "food": _as_food(med.get("food")),
+        "duration": _as_str(med.get("duration")),
+        "only_when_needed": med.get("prn") in (True, "true", "True", "yes"),
+        "needed_for": _plain(_clean_reason(med.get("prn_for"))),
+        "max_per_day": _with_unit(_as_str(med.get("max_day")), _as_str(med.get("amount"))),
+        "route": _as_str(med.get("route")),
+        "times_per_week": _as_int(med.get("per_week")),
+        "weekday": None,
+        "times_per_day_range": None, "single_dose": False,
+        "purpose": None,  # filled in by _add_drug_info()
+        "issues": [{"level": "unsure", "what": "part of this medicine's instructions", "why": why.rstrip(".")}
+                   for why in _as_list(med.get("unclear"))],
+    }
+
+
 def _normalize_dosing(data: dict) -> dict:
     """Map the model's compact keys onto the public `structured` shape (models drift on types)."""
-    medicines = []
-    for med in data.get("meds") or data.get("medicines") or []:
-        if not isinstance(med, dict):
-            continue
-        name = _as_str(med.get("name")) or _as_str(med.get("generic"))
-        if not name:
-            continue
-        times = {t.lower() for t in _as_list(med.get("times"))} & set(_TIME_ORDER)
-        medicines.append({
-            "name_as_written": name,
-            "common_name": (_as_str(med.get("generic")) or "").lower() or None,
-            "form": _as_str(med.get("form")),
-            "strength": _as_str(med.get("strength")),
-            "amount_per_dose": _as_str(med.get("amount")),
-            "times_per_day": _as_int(med.get("per_day")),
-            "times_of_day": sorted(times, key=_TIME_ORDER.index),
-            "every_hours": _as_int(med.get("every_h")),
-            "food": _as_food(med.get("food")),
-            "duration": _as_str(med.get("duration")),
-            "only_when_needed": med.get("prn") in (True, "true", "True", "yes"),
-            "needed_for": _plain(_clean_reason(med.get("prn_for"))),
-            "max_per_day": _with_unit(_as_str(med.get("max_day")), _as_str(med.get("amount"))),
-            "route": _as_str(med.get("route")),
-            "times_per_week": _as_int(med.get("per_week")),
-            "weekday": None,
-            "purpose": None,  # filled in by _add_drug_info()
-            "issues": [{"level": "unsure", "what": "part of this medicine's instructions", "why": why.rstrip(".")}
-                       for why in _as_list(med.get("unclear"))],
-        })
+    medicines = [m for m in map(_normalize_med, data.get("meds") or data.get("medicines") or []) if m]
     conditions = list(dict.fromkeys(_as_list(data.get("diagnosis"))))
     # Small models sometimes list the illness as a medicine or as unreadable too; drop those.
     illness_keys = {_letters(c) for c in conditions}
@@ -417,7 +546,7 @@ def _normalize_dosing(data: dict) -> dict:
 def _drug_key(med: dict) -> str:
     """Cache key: generic name if known, else the first word as written. Scoped per model."""
     name = med.get("common_name") or med["name_as_written"].split()[0]
-    return f"purpose-v1::{LLM_MODEL}::{name.lower()}"
+    return f"purpose-v2::{LLM_MODEL}::{name.lower()}"
 
 
 def _load_drug_cache() -> dict:
@@ -456,35 +585,98 @@ def _plain(text: str | None) -> str | None:
     return text
 
 
-def _fetch_drug_purpose(med: dict) -> str | None:
-    """One tiny LLM call: what this medicine is used for, in a few simple words."""
-    label = med.get("common_name") or med["name_as_written"]
+# Purposes that say nothing: treated as "I do not know what it is for".
+_VAGUE_PURPOSE_RE = re.compile(r"feel better|sick or hurt|your health|general|various|many (?:things|conditions)|"
+                               r"different (?:things|problems)|^for (?:you|treatment)$|help (?:you|your body)$", re.IGNORECASE)
+
+
+def _fetch_drug_purpose(med: dict) -> dict | None:
+    """One tiny LLM call: does the AI really know this medicine, and what is it for?
+    Returns {"known": bool, "active": str|None, "purpose": str|None}, or None if the call failed."""
+    label = med["name_as_written"] if not med.get("common_name") else f"{med['name_as_written']} ({med['common_name']})"
     try:
-        data = _parse_json_object(_chat(_DRUG_PURPOSE_SYSTEM_PROMPT, f"Medicine: {label}", max_tokens=60, json_mode=True))
+        data = _parse_json_object(_chat(_DRUG_PURPOSE_SYSTEM_PROMPT, f"Medicine: {label}", max_tokens=90, json_mode=True))
     except (PipelineError, ValueError, json.JSONDecodeError) as exc:
-        logger.warning("Could not get the purpose of %s: %s", label, exc)
+        logger.warning("Could not look up %s: %s", label, exc)
         return None
+    active = _as_str(data.get("active_ingredient"))
     purpose = _as_str(data.get("purpose"))
     if purpose:  # the model sometimes repeats the sentence it is slotted into
         purpose = re.sub(r"^\s*(this medicine is)\s*", "", purpose, flags=re.IGNORECASE).strip().rstrip(".")
-    return purpose or None
+        if _VAGUE_PURPOSE_RE.search(purpose):
+            purpose = None
+    known = data.get("known") in (True, "true", "True", "yes") and bool(active)  # no active ingredient = not known
+    return {"known": known, "active": active if known else None, "purpose": purpose if known else None}
 
 
-def _iter_drug_info(extraction: dict):
+MEDICINE_NAMES_PATH = Path(os.getenv("MEDICINE_NAMES", Path(__file__).parent / "data" / "medicine_names.txt"))
+
+
+@lru_cache(maxsize=1)
+def _known_names() -> frozenset:
+    try:
+        lines = MEDICINE_NAMES_PATH.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return frozenset()
+    return frozenset(l.strip() for l in lines if l.strip() and not l.startswith("#"))
+
+
+def _name_key(text: str) -> str:
+    text = "".join(c for c in unicodedata.normalize("NFD", text.lower()) if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z]", "", text)
+
+
+def name_is_known(med: dict) -> bool:
+    """Is the written name (not the AI's guess) a medicine on our list? Small models will happily
+    "recognise" a made-up name, so this is decided by the list, not by the model."""
+    names = _known_names()
+    if not names:  # no list available: fall back to the model's own answer
+        return True
+    words = short_name(med).split()
+    candidates = [" ".join(words), words[0] if words else ""] + [w for w in words if len(w) >= 4]
+    return any(_name_key(c) in names for c in candidates if len(_name_key(c)) >= 4)
+
+
+def _apply_purpose(med: dict, info: dict | None) -> None:
+    """Say plainly what we do not know, instead of guessing."""
+    if not name_is_known(med):
+        med["unknown_medicine"] = True
+        _flag(med, "unsure", "this medicine's name",
+              "I do not recognise this medicine; the name may be misread or misspelled")
+        return
+    if info is None:
+        _flag(med, "note", "what it is for", "I could not look up what this medicine is used for")
+        return
+    if isinstance(info, str):  # older cache entries
+        info = {"known": True, "active": None, "purpose": info}
+    if not info["known"]:  # a real name, but the AI does not know it well enough to say what it is for
+        med["purpose_unknown"] = True
+        return
+    med["purpose"] = _plain(info["purpose"])
+    if not med["purpose"]:
+        med["purpose_unknown"] = True
+
+
+def _iter_drug_info(extraction: dict, started: dict | None = None):
     """Fill in what each medicine is for, yielding each medicine's index as it is done.
 
     Cached drugs are yielded immediately; the rest are fetched in parallel and yielded in the
-    order they finish, so a caller can show each one as soon as it is ready.
+    order they finish, so a caller can show each one as soon as it is ready. `started` holds
+    lookups already running ({cache key: future}), begun while the prescription was still being read.
     """
+    started = started or {}
     meds = extraction["medicines"]
     with _cache_lock:
         cache = _load_drug_cache()
 
     missing: dict[str, list[int]] = {}
     for i, med in enumerate(meds):
+        if med.get("no_name"):
+            yield i
+            continue
         key = _drug_key(med)
         if key in cache:
-            med["purpose"] = _plain(cache[key])
+            _apply_purpose(med, cache[key])
             yield i
         else:
             missing.setdefault(key, []).append(i)
@@ -493,17 +685,16 @@ def _iter_drug_info(extraction: dict):
 
     logger.info("Looking up %d drug(s): %s", len(missing), ", ".join(k.split("::")[-1] for k in missing))
     with ThreadPoolExecutor(max_workers=min(4, len(missing))) as pool:
-        futures = {pool.submit(_fetch_drug_purpose, meds[idx[0]]): key for key, idx in missing.items()}
+        futures = {started.get(key) or pool.submit(_fetch_drug_purpose, meds[idx[0]]): key
+                   for key, idx in missing.items()}
         for future in as_completed(futures):
             key = futures[future]
-            purpose = future.result()
-            if purpose:
+            info = future.result()
+            if info is not None:
                 with _cache_lock:
-                    _save_drug_cache({**_load_drug_cache(), key: purpose})
+                    _save_drug_cache({**_load_drug_cache(), key: info})
             for i in missing[key]:
-                meds[i]["purpose"] = _plain(purpose)
-                if not purpose:
-                    _flag(meds[i], "note", "what it is for", "I could not look up what this medicine is used for")
+                _apply_purpose(meds[i], info)
                 yield i
 
 
@@ -539,10 +730,46 @@ _FORM_PATTERNS = {
 _FORM_WORD_RE = re.compile(r"\b(tablet|capsule|sachet)(s?)\b", re.IGNORECASE)
 
 
+# Where a new medicine starts inside a line: after ". " / "; " / ", ", a word followed by a strength
+# or a colon ("Spasfon :", "Zorbitrax 20 mg", "Doliprane 1000 :"), or a medicine name from our list.
+_NEXT_MED_RE = re.compile(
+    r"(?:(?<=[.;,])|(?<=[.;,]\s)|(?<=[.;,]\s\s))(?=([A-Za-zÀ-ÿ][\w-]{2,})"
+    r"(\s+\d+(?:[.,]\d+)?\s*(?:mg|g|ml|µg|mcg|ui)\b|(?:\s+\d+(?:[.,]\d+)?)?\s*:)?)",
+    re.IGNORECASE,
+)
+
+
+def _medicine_parts(line: str) -> list[str]:
+    """A line cut where each medicine starts, for lines with several medicines (often dictated)."""
+    names, cuts = _known_names(), [0]
+    for m in _NEXT_MED_RE.finditer(line):
+        if m.start() and (m.group(2) or _name_key(m.group(1)) in names):
+            cuts.append(m.start())
+    return [line[a:b] for a, b in zip(cuts, cuts[1:] + [len(line)])]
+
+
 def _source_line(med: dict, source_text: str) -> str | None:
-    """The prescription line that mentions this medicine (matched on the first word of its name)."""
-    first_word = med["name_as_written"].split()[0].lower()
-    return next((line for line in source_text.splitlines() if first_word in line.lower()), None)
+    """The part of the prescription about this medicine: its line, or its part of a line that
+    holds several medicines (matched on the first word of its name, accents ignored)."""
+    first_word = _name_key(med["name_as_written"].split()[0])
+    if not first_word:
+        return None
+    line = next((line for line in source_text.splitlines() if first_word in _name_key(line)), None)
+    if line is None:
+        return None
+    return next((part for part in _medicine_parts(line) if first_word in _name_key(part)), line)
+
+
+def name_on_prescription(med: dict, source_text: str) -> bool:
+    """Is the medicine's name really written on the prescription? A name that is not there was
+    made up (models sometimes copy the example from their instructions) and is never shown."""
+    if med.get("no_name"):
+        return True
+    words = [_name_key(w) for w in med["name_as_written"].split()]
+    words = [w for w in words if len(w) >= 3 and not w.isdigit()]
+    text = _name_key(source_text)
+    # The first 5 letters are enough, so small spelling differences ("Doliprane"/"Doliprene") still match.
+    return any(w[:5] in text for w in words[:2]) if words else True
 
 
 def _fix_form(med: dict, source_text: str) -> None:
@@ -570,11 +797,12 @@ _LONG_TERM_RE = re.compile(r"\b(au long cours|à vie|a vie|long terme|traitement
 
 
 # What the line must contain for each food instruction to be kept.
+_MEAL = r"(?:les?\s+|la\s+|du\s+)?(?:repas|manger|d[ée]jeuner|d[îi]ner|petit[- ]d[ée]j\w*|meals?|food|eating|breakfast|lunch|dinner)"
 _FOOD_EVIDENCE = {
     "with food": re.compile(r"repas|manger|meal|food|eating", re.IGNORECASE),
-    "before food": re.compile(r"avant|before|\bac\b", re.IGNORECASE),
-    "after food": re.compile(r"apr[èe]s|after|\bpc\b", re.IGNORECASE),
-    "empty stomach": re.compile(r"jeun|empty|fasting|avant", re.IGNORECASE),
+    "before food": re.compile(r"\b(?:avant|before)\s+" + _MEAL + r"|\bac\b", re.IGNORECASE),
+    "after food": re.compile(r"\b(?:apr[èe]s|after)\s+" + _MEAL + r"|\bpc\b", re.IGNORECASE),
+    "empty stomach": re.compile(r"jeun|empty stomach|fasting|\b(?:avant|before)\s+" + _MEAL, re.IGNORECASE),
 }
 _PRN_RE = re.compile(r"\b(si besoin|si n[ée]cessaire|en cas de|si|prn|as needed|if needed|when needed)\b\s*(.*)", re.IGNORECASE)
 _PRN_REASONS = [("douleur", "pain"), ("fi[èe]vre", "fever"), ("mal de gorge", "a sore throat"), ("toux", "a cough"),
@@ -600,8 +828,32 @@ _WEEKDAYS = [(r"\blundi|\bmonday", "Monday"), (r"\bmardi|\btuesday", "Tuesday"),
 _LATIN_PER_DAY = {"qd": 1, "od": 1, "bid": 2, "tid": 3, "qid": 4}
 
 
+_PER_DAY_RANGE_RE = re.compile(_NUM + r"\s*(?:à|a|-|to|ou|or)\s*" + _NUM +
+                               r"\s*(?:fois|x|times?)\s*(?:par|/|a|per)\s*(?:j\b|jour|day|24\s*h)", re.IGNORECASE)
+_ONE_UNIT_PER_DAY_RE = re.compile(r"\b(?:1|un|une|one)\s*(?:cp|comprim\w*|g[ée]l\w*|sach\w*|tab\w*|cap\w*|pill\w*|"
+                                  r"ovule\w*|suppo\w*|ampoule\w*|patch\w*|application\w*)\s*(?:par|/|a|per)\s*(?:j\b|jour|day|24\s*h)",
+                                  re.IGNORECASE)
+_PER_24H_RE = re.compile(_NUM + r"\s*(?:fois|x|times?)\s*(?:par|/|per|toutes les|every)\s*24\s*h", re.IGNORECASE)
+_SINGLE_DOSE_RE = re.compile(r"prise unique|dose unique|en une (?:seule )?prise|une seule fois|single dose|one[- ]off|\bstat\b",
+                             re.IGNORECASE)
+
+
+def per_day_range_in_line(line: str) -> tuple[int, int] | None:
+    """"1 à 4 fois par 24 heures" -> (1, 4)."""
+    if m := _PER_DAY_RANGE_RE.search(line):
+        low, high = _number_value(m.group(1)), _number_value(m.group(2))
+        if low and high and low < high:
+            return low, high
+    return None
+
+
 def _per_day_in_line(line: str) -> int | None:
-    """Times per day as written: "x 2/j", "3 fois par jour", "trois fois par jour", "TID"."""
+    """Times per day as written: "x 2/j", "3 fois par jour", "trois fois par jour", "TID", "2 fois par 24 h",
+    "1 comprimé par jour" (= once a day)."""
+    if m := _PER_24H_RE.search(line):
+        return _number_value(m.group(1))
+    if _ONE_UNIT_PER_DAY_RE.search(line):
+        return 1
     if m := _PER_DAY_RE.search(line):
         return int(next(g for g in m.groups() if g))
     if m := _PER_DAY_WORDS_RE.search(line):
@@ -629,12 +881,41 @@ def _drop_understood_unreadable(extraction: dict, source_text: str) -> None:
     extraction["issues"] = kept + notes
 
 
+# A "name" that is really just a dose: "5 comprimés", "1 comprimé 3 fois par jour", "2 gélules le matin".
+_NO_NAME_RE = re.compile(r"(?:\d+(?:[.,/]\d+)?|un|une|deux|trois)\s*(?:cp|comprim\w*|g[ée]l\w*|sach\w*|tab\w*|cap\w*|pills?|"
+                         r"gouttes?|drops?|ml|bouff\w*|puffs?|ampoules?|ovules?|injections?)\b.*", re.IGNORECASE)
+
+
+def _name_on_line(line: str) -> str | None:
+    """A medicine name from our list written on this line, with its strength ("Amoxicilline 1 g")."""
+    names = _known_names()
+    for m in re.finditer(r"[A-Za-zÀ-ÿ][\w-]{3,}", line):
+        if _name_key(m.group(0)) in names:
+            strength = re.match(r"\s+\d+(?:[.,]\d+)?\s*(?:mg|g|ml|µg|mcg|ui)\b", line[m.end():], re.IGNORECASE)
+            return m.group(0) + (strength.group(0) if strength else "")
+    return None
+
+
 def _check_against_line(med: dict, source_text: str) -> None:
     """Small models drop or invent details. Re-read the medicine's own line:
     - remove a food instruction the line does not mention;
     - fill in "when needed", times of day, times per day, duration and "à sucer" if the model missed them.
     """
-    line = _source_line(med, source_text)
+    if _NO_NAME_RE.fullmatch(med["name_as_written"].strip()):
+        # The AI wrote the dose where the name goes. Find the line with that dose and read the name there.
+        dose = med["name_as_written"].strip()
+        line = next((l for l in source_text.splitlines() if _name_key(dose) and _name_key(dose) in _name_key(l)),
+                    source_text.splitlines()[0] if source_text.strip() else "")
+        if name := _name_on_line(line):
+            _flag(med, "note", "medicine name", f'the AI wrote "{dose}" as the name; "{name}" is read from the prescription')
+            med["name_as_written"], med["common_name"] = name, None
+        else:
+            med["name_as_written"] = "Medicine (name not written)"
+            med["common_name"] = None
+            med["no_name"] = True
+            _flag(med, "unsure", "which medicine this is", "the medicine's name is not written on the prescription")
+    else:
+        line = _source_line(med, source_text)
     if not line:
         _flag(med, "unsure", "this medicine",
               "I could not find this name in the prescription text, so I may have misread it")
@@ -657,10 +938,22 @@ def _check_against_line(med: dict, source_text: str) -> None:
             med["needed_for"] = med.get("needed_for") or (_join_or(list(dict.fromkeys(reasons))) if reasons else None)
             _flag(med, "note", "when needed", f'added "only when needed" from "{m.group(0).strip()}" (the AI had missed it)')
 
+    written_times = [t for t, pattern in _TIME_EVIDENCE if re.search(pattern, line, re.IGNORECASE)]
+    if invented := [t for t in med.get("times_of_day") or [] if t not in written_times]:
+        _flag(med, "note", "time of day", f"removed {', '.join(invented)}: it is not on the prescription")
+        med["times_of_day"] = [t for t in med["times_of_day"] if t in written_times]
     if not med.get("times_of_day"):
-        med["times_of_day"] = [t for t, pattern in _TIME_EVIDENCE if re.search(pattern, line, re.IGNORECASE)]
+        med["times_of_day"] = written_times
         if med["times_of_day"]:
             _flag(med, "note", "time of day", f"added {', '.join(med['times_of_day'])} from the prescription (the AI had missed it)")
+
+    # The AI's "per week" and "every N hours" need the words on the line ("par 24 heures" is per DAY).
+    if med.get("times_per_week") and not _PER_WEEK_RE.search(line):
+        _flag(med, "note", "weekly", f'removed "{med["times_per_week"]} time(s) a week": the prescription does not say weekly')
+        med["times_per_week"], med["weekday"] = None, None
+    if med.get("every_hours") and not _EVERY_HOURS_RE.search(line):
+        _flag(med, "note", "hours between doses", f'removed "every {med["every_hours"]} hours": it is not written that way')
+        med["every_hours"] = None
 
     # Weekly medicines (e.g. methotrexate): a daily reading here would be dangerous.
     if m := _PER_WEEK_RE.search(line):
@@ -671,7 +964,17 @@ def _check_against_line(med: dict, source_text: str) -> None:
         if day := next((en for fr, en in _WEEKDAYS if re.search(fr, line, re.IGNORECASE)), None):
             med["weekday"] = day
 
-    written_per_day = _per_day_in_line(line)
+    if rng := per_day_range_in_line(line):
+        med["times_per_day_range"] = rng
+        med["times_per_day"] = None
+        _flag(med, "note", "times per day", f"read {rng[0]} to {rng[1]} times a day from the prescription")
+
+    if _SINGLE_DOSE_RE.search(line):
+        med["single_dose"] = True
+        med["times_per_day"], med["times_of_day"] = None, med.get("times_of_day") or []
+        _flag(med, "note", "single dose", f'read "{_SINGLE_DOSE_RE.search(line).group(0)}" as one single dose')
+
+    written_per_day = None if med.get("times_per_day_range") else _per_day_in_line(line)
     if med.get("times_per_day") and med["times_per_day"] != written_per_day \
             and med["times_per_day"] != len(med.get("times_of_day") or []):
         _flag(med, "note", "times per day", f'removed "{med["times_per_day"]} times a day": it is not on the prescription')
@@ -694,9 +997,11 @@ def _check_against_line(med: dict, source_text: str) -> None:
         _flag(med, "note", "duration", f'removed "{med["duration"]}": the prescription does not say it is long-term')
         med["duration"] = None
 
+    if med.get("route") and re.search(r"\bsuck", med["route"], re.IGNORECASE) and re.search(r"sucer", line, re.IGNORECASE):
+        med["route"] = "Suck it"  # only what is written: "à sucer" (the AI likes to add "slowly")
     if not med.get("route") and re.search(r"[àa] sucer|sucer", line, re.IGNORECASE):
-        med["route"] = "Suck it slowly"
-        _flag(med, "note", "how to use", 'added "suck it slowly" from "à sucer" (the AI had missed it)')
+        med["route"] = "Suck it"
+        _flag(med, "note", "how to use", 'added "suck it" from "à sucer" (the AI had missed it)')
 
     before = med.get("duration")
     _fill_duration(med, line)
@@ -766,6 +1071,55 @@ def _flag_high_risk(med: dict, source_text: str) -> None:
         _flag(med, "risk", "child's dose", "doses for children depend on age and weight")
 
 
+def check_medicine(med: dict, source_text: str, source_numbers: set[str] | None = None) -> dict:
+    """All the checks of one medicine against its line of the prescription. Safe to show afterwards."""
+    if source_numbers is None:
+        source_numbers = numbers_on_prescription(source_text)
+    if not _NO_NAME_RE.fullmatch(med["name_as_written"].strip()) and not name_on_prescription(med, source_text):
+        med["not_on_prescription"] = True
+        med["_checked"] = True
+        return med
+    for issue in med.get("issues", []):
+        if _numbers(issue["why"]) - source_numbers:
+            issue["why"] = "I could not read or understand this part of the prescription"
+    _fix_form(med, source_text)
+    _check_against_line(med, source_text)
+    for field, label in (
+        ("strength", "strength"),
+        ("amount_per_dose", "how much to take"),
+        ("every_hours", "time between doses"),
+        ("duration", "length of treatment"),
+        ("max_per_day", "maximum per day"),
+    ):
+        value = med.get(field)
+        if value is None:
+            continue
+        unknown = _numbers(str(value)) - source_numbers
+        if unknown:
+            med[field] = None
+            _flag(med, "unsure", label if label.startswith("how") else f"the {label}",
+                  f'I read "{value}", but the number {", ".join(sorted(unknown))} is not on the prescription, so I removed it')
+
+    # Times per day must agree with the listed moments of the day, when both are given.
+    n, moments = med.get("times_per_day"), med.get("times_of_day")
+    if n and moments and n != len(moments):
+        _flag(med, "unsure", "how many times a day to take it",
+              f"the prescription seems to say {n} times a day, but names {len(moments)} time(s) of the day")
+
+    # Things the patient needs that the prescription does not give.
+    _flag_high_risk(med, source_text)
+    flagged = {i["what"] for i in med.get("issues", [])}
+    if not med.get("amount_per_dose") and "how much to take" not in flagged:
+        _flag(med, "unsure", "how much to take", "the amount to take each time is not written on the prescription")
+    if not (med["only_when_needed"] or med.get("times_per_day") or med.get("times_of_day")
+            or med.get("single_dose") or med.get("times_per_day_range")
+            or med.get("every_hours") or med.get("times_per_week")):
+        _flag(med, "unsure", "how often to take it", "how many times a day is not written on the prescription")
+
+    med["_checked"] = True
+    return med
+
+
 def _safety_check(extraction: dict, source_text: str) -> dict:
     """Check the model's reading against the original prescription and record every doubt.
 
@@ -779,38 +1133,22 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
         if _numbers(issue["why"]) - source_numbers:  # e.g. "it could be 500 mg" when 500 is not written
             issue["why"] = "I could not read or understand this part of the prescription"
     for med in extraction["medicines"]:
-        _fix_form(med, source_text)
-        _check_against_line(med, source_text)
-        for field, label in (
-            ("strength", "strength"),
-            ("amount_per_dose", "how much to take"),
-            ("every_hours", "time between doses"),
-            ("duration", "length of treatment"),
-            ("max_per_day", "maximum per day"),
-        ):
-            value = med.get(field)
-            if value is None:
-                continue
-            unknown = _numbers(str(value)) - source_numbers
-            if unknown:
-                med[field] = None
-                _flag(med, "unsure", label if label.startswith("how") else f"the {label}",
-                      f'I read "{value}", but the number {", ".join(sorted(unknown))} is not on the prescription, so I removed it')
+        if not med.get("_checked"):
+            check_medicine(med, source_text, source_numbers)
+    invented = [m for m in extraction["medicines"] if m.get("not_on_prescription")]
+    for med in invented:
+        _flag(extraction, "risk", "medicine", f'the AI listed "{med["name_as_written"]}", which is not on the prescription, '
+              "so I removed it: please check that no medicine is missing")
+    extraction["medicines"] = [m for m in extraction["medicines"] if not m.get("not_on_prescription")]
+    extraction["invented_medicines"] = len(invented)
 
-        # Times per day must agree with the listed moments of the day, when both are given.
-        n, moments = med.get("times_per_day"), med.get("times_of_day")
-        if n and moments and n != len(moments):
-            _flag(med, "unsure", "how many times a day to take it",
-                  f"the prescription seems to say {n} times a day, but names {len(moments)} time(s) of the day")
-
-        # Things the patient needs that the prescription does not give.
-        _flag_high_risk(med, source_text)
-        flagged = {i["what"] for i in med.get("issues", [])}
-        if not med.get("amount_per_dose") and "how much to take" not in flagged:
-            _flag(med, "unsure", "how much to take", "the amount to take each time is not written on the prescription")
-        if not (med["only_when_needed"] or med.get("times_per_day") or med.get("times_of_day")
-                or med.get("every_hours") or med.get("times_per_week")):
-            _flag(med, "unsure", "how often to take it", "how many times a day is not written on the prescription")
+    # Text copied from the example in the AI's instructions, when the prescription says nothing like it.
+    for field, value, evidence in _EXAMPLE_COPIES:
+        items = extraction[field]
+        if any(_letters(i) == _letters(value) for i in items) and not re.search(evidence, source_text, re.IGNORECASE):
+            extraction[field] = [i for i in items if _letters(i) != _letters(value)]
+            _flag(extraction, "note", field.replace("_", " ").replace("conditions", "illness"),
+                  f'removed "{value}": it is not on the prescription')
 
     # Small models copy the follow-up from the prompt example; keep it only if the prescription has one.
     if extraction["follow_up"] and not _FOLLOW_UP_RE.search(source_text):
@@ -840,6 +1178,12 @@ def _safety_check(extraction: dict, source_text: str) -> dict:
     return extraction
 
 
+# What the example in _DOSING_SYSTEM_PROMPT says, and the words a prescription would need to say the same.
+_EXAMPLE_COPIES = [
+    ("conditions", "throat infection", r"angine|gorge|throat|pharyn|amygdal|tonsil"),
+    ("doctor_instructions", "Rest.", r"\brepos|\brest\b|repose"),
+]
+
 _FOLLOW_UP_RE = re.compile(
     r"\b(revoir|revenir|contr[ôo]le|rendez[- ]vous|rdv|consultation|reconsulter|suivi|retour|"
     r"follow[- ]?up|see (me|the doctor|your doctor) again|come back|check[- ]?up|review|"
@@ -858,16 +1202,7 @@ _DOSE_IN_TEXT_RE = re.compile(r"\d+(?:[.,]\d+)?\s*(mg|g|ml|µg|mcg|tablets?|caps
 
 def _read_dosing(text: str, retries: int = 1) -> dict:
     """Dosing call + safety check. Drug facts are not filled in yet."""
-    if not text or not text.strip():
-        raise PipelineError("Sorry, there is nothing to explain: the prescription is empty.")
-    # Personal details are removed here, on this computer, before anything is sent to the AI.
-    source, removed = keep_medical_only(text)
-    if not source:
-        raise PipelineError(
-            "Sorry, I could not find any medical information in this text. Why: it only seems to contain "
-            "personal details (" + ", ".join(removed) + "), which this tool does not need."
-        )
-
+    source, removed = _medical_part(text)
     reason = "unknown"
     for attempt in range(retries + 1):
         raw = _chat(_DOSING_SYSTEM_PROMPT, f"Prescription:\n{source}", max_tokens=1200, json_mode=True)
@@ -879,7 +1214,11 @@ def _read_dosing(text: str, retries: int = 1) -> dict:
             continue
         if extraction["medicines"] or extraction["conditions"]:
             extraction["privacy_removed"] = removed
-            return _safety_check(extraction, source)
+            _safety_check(extraction, source)
+            if extraction["invented_medicines"] and attempt < retries:
+                logger.warning("The AI listed a medicine that is not on the prescription: reading again")
+                continue
+            return extraction
         reason = "I could not find any medicine or illness in this text"
         if extraction["issues"]:
             reason += " (" + "; ".join(f"{i['what']}: {i['why']}" for i in extraction["issues"]) + ")"
@@ -889,6 +1228,19 @@ def _read_dosing(text: str, retries: int = 1) -> dict:
         f"Sorry, I could not understand this prescription. Why: {reason}. "
         "Please check the text, or ask a doctor or pharmacist to explain it."
     )
+
+
+def _medical_part(text: str) -> tuple[str, list[str]]:
+    """The prescription without personal details (removed here, on this computer, before any AI call)."""
+    if not text or not text.strip():
+        raise PipelineError("Sorry, there is nothing to explain: the prescription is empty.")
+    source, removed = keep_medical_only(text)
+    if not source:
+        raise PipelineError(
+            "Sorry, I could not find any medical information in this text. Why: it only seems to contain "
+            "personal details (" + ", ".join(removed) + "), which this tool does not need."
+        )
+    return source, removed
 
 
 def extract_prescription(text: str) -> dict:
@@ -905,19 +1257,127 @@ def extract_prescription(text: str) -> dict:
     return extraction
 
 
+class _MedsInStream:
+    """Picks each complete medicine out of the model's JSON while it is still being written.
+
+    Feed it the pieces of text as they arrive; it returns the objects of the "meds" list that are
+    finished (closing brace received). Braces inside strings are ignored.
+    """
+
+    def __init__(self):
+        self.text, self.pos = "", 0
+        self.in_list = self.done = self.in_str = self.escape = False
+        self.depth, self.start = 0, None
+
+    def feed(self, piece: str) -> list[dict]:
+        self.text += piece
+        found = []
+        if not self.in_list:
+            m = re.search(r'"(?:meds|medicines)"\s*:\s*\[', self.text)
+            if not m:
+                return found
+            self.in_list, self.pos = True, m.end()
+        while self.pos < len(self.text) and not self.done:
+            ch = self.text[self.pos]
+            if self.in_str:
+                if self.escape:
+                    self.escape = False
+                elif ch == "\\":
+                    self.escape = True
+                elif ch == '"':
+                    self.in_str = False
+            elif ch == '"':
+                self.in_str = True
+            elif ch == "{":
+                if self.depth == 0:
+                    self.start = self.pos
+                self.depth += 1
+            elif ch == "}":
+                self.depth -= 1
+                if self.depth == 0 and self.start is not None:
+                    try:
+                        found.append(json.loads(self.text[self.start:self.pos + 1]))
+                    except json.JSONDecodeError:
+                        pass  # the full answer is checked again at the end
+                    self.start = None
+            elif ch == "]" and self.depth == 0:
+                self.done = True
+            self.pos += 1
+        return found
+
+
+def _ready_medicines(items, source, source_numbers, shown, started, cache, pool):
+    """Check each finished medicine of the live answer and yield it to show, unless it was made up."""
+    for item in items:
+        med = _normalize_med(item)
+        if not med:
+            continue
+        check_medicine(med, source, source_numbers)
+        if med.get("not_on_prescription"):
+            continue  # never shown; the whole reading is checked again at the end
+        shown.append(med)
+        yield {"type": "medicine_ready", "index": len(shown) - 1, "medicine": med}
+        # Start looking up what it is for right away, while the model writes the next one.
+        key = _drug_key(med)
+        if not med.get("no_name") and key not in cache and key not in started:
+            started[key] = pool.submit(_fetch_drug_purpose, med)
+
+
 def stream_prescription(text: str):
     """Same as extract_prescription(), but yields results as soon as each part is ready.
 
+    Like a game world loading block by block, each medicine is shown as soon as the model has
+    finished writing it AND it has passed all its checks; nothing half-written or unchecked is shown.
+
     Yields, in order:
-        {"type": "dosing", "prescription": dict}               # illness + how to take each medicine
-        {"type": "medicine", "index": int, "medicine": dict}   # once per medicine, when its purpose arrives
-        {"type": "done", "prescription": dict, "text": str,    # complete explanation for the patient
-         "review": [str], "needs_review": bool}                # for the doctor: risks, doubts and corrections
+        {"type": "medicine_ready", "index": int, "medicine": dict}  # how to take one medicine, checked
+        {"type": "dosing", "prescription": dict,                   # everything read: illness, instructions...
+         "replaces_stream": bool}                                  # True: the streamed medicines changed, show these instead
+        {"type": "medicine", "index": int, "medicine": dict}       # once per medicine, when its purpose arrives
+        {"type": "done", "prescription": dict, "text": str,        # complete explanation for the patient
+         "review": [str], "needs_review": bool}                    # for the doctor: risks, doubts and corrections
     """
-    extraction = _read_dosing(text)
-    yield {"type": "dosing", "prescription": extraction}
-    for i in _iter_drug_info(extraction):
-        yield {"type": "medicine", "index": i, "medicine": extraction["medicines"][i]}
+    source, removed = _medical_part(text)
+    source_numbers = numbers_on_prescription(source)
+    shown: list[dict] = []
+    started: dict = {}
+    pool = ThreadPoolExecutor(max_workers=4)
+    with _cache_lock:
+        cache = _load_drug_cache()
+    try:
+        parser, raw = _MedsInStream(), ""
+        try:
+            pieces = _chat_stream(_DOSING_SYSTEM_PROMPT, f"Prescription:\n{source}", max_tokens=1200, json_mode=True)
+            for piece in pieces:
+                raw += piece
+                yield from _ready_medicines(parser.feed(piece), source, source_numbers, shown, started, cache, pool)
+        except PipelineError as exc:
+            # The live answer broke off (e.g. the AI service timed out): read again the normal way, with retries.
+            logger.warning("Streaming failed (%s): reading again without streaming", exc)
+            raw = ""
+
+        extraction = None
+        try:
+            extraction = _normalize_dosing(_parse_json_object(_THINK_RE.sub("", raw)))
+        except (ValueError, json.JSONDecodeError) as exc:
+            logger.warning("Could not parse streamed JSON: %s", exc)
+        if extraction and (extraction["medicines"] or extraction["conditions"]):
+            # Keep the medicines already checked and shown; a medicine is the same if its name is.
+            ready = {m["name_as_written"]: m for m in shown}
+            extraction["medicines"] = [ready.get(m["name_as_written"], m) for m in extraction["medicines"]]
+            extraction["privacy_removed"] = removed
+            _safety_check(extraction, source)
+            if extraction["invented_medicines"]:
+                logger.warning("The AI listed a medicine that is not on the prescription: reading again")
+                extraction = _read_dosing(text)
+        else:
+            extraction = _read_dosing(text)  # one more try the normal way
+        replaced = [id(m) for m in extraction["medicines"]] != [id(m) for m in shown]
+        yield {"type": "dosing", "prescription": extraction, "replaces_stream": replaced and bool(shown)}
+        for i in _iter_drug_info(extraction, started):
+            yield {"type": "medicine", "index": i, "medicine": extraction["medicines"][i]}
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
     yield {"type": "done", "prescription": extraction, "text": render_explanation(extraction),
            "review": render_review(extraction), "needs_review": needs_review(extraction)}
 
@@ -1012,8 +1472,20 @@ def _how_sentences(med: dict) -> list[str]:
     else:
         moments = med.get("times_of_day") or []
         n = med.get("times_per_day")
-        if moments:
+        if med.get("times_per_week"):  # weekly first: "in the morning" alone would read as every day
+            w = med["times_per_week"]
+            first += " once a week" if w == 1 else f" {w} times a week"
+            if med.get("weekday"):
+                first += f", on {med['weekday']}"
+            if moments:
+                first += ", " + _join_or([_TIME_WORDS[m] for m in moments], "and")
+        elif moments:
             first += " " + _join_or([_TIME_WORDS[m] for m in moments], "and")
+        elif med.get("single_dose"):
+            first += " only once (one single dose)"
+        elif med.get("times_per_day_range"):
+            low, high = med["times_per_day_range"]
+            first += f" {low} to {high} times a day"
         elif med.get("times_per_week"):
             w = med["times_per_week"]
             first += " once a week" if w == 1 else f" {w} times a week"
@@ -1043,7 +1515,11 @@ def _how_sentences(med: dict) -> list[str]:
 
 
 def _purpose_sentences(med: dict) -> list[str]:
-    return [_sentence(f"{short_name(med)} is {_lower_first(med['purpose'])}")] if med.get("purpose") else []
+    if med.get("purpose"):
+        return [_sentence(f"{short_name(med)} is {_lower_first(med['purpose'])}")]
+    if med.get("purpose_unknown"):
+        return [f"I do not know what {short_name(med)} is for. Please ask your doctor or pharmacist."]
+    return []
 
 
 def _sorry_sentences(med: dict) -> list[str]:
@@ -1065,7 +1541,7 @@ def render_medicine(number: int, med: dict, part: str = "all") -> list[str]:
     if part == "dosing":
         body = _how_sentences(med) + _sorry_sentences(med)
     elif part == "details":
-        body = _purpose_sentences(med)
+        body = _purpose_sentences(med) + (_sorry_sentences(med) if med.get("unknown_medicine") else [])
     else:
         body = _purpose_sentences(med) + _how_sentences(med) + _sorry_sentences(med)
     return [f"{number}. {med['name_as_written']}", *(f"   {s}" for s in body)]
@@ -1074,8 +1550,8 @@ def render_medicine(number: int, med: dict, part: str = "all") -> list[str]:
 def _daily_schedule(medicines: list[dict]) -> list[str]:
     """One line per moment of the day. Empty if any regular medicine has no known time."""
     regular = [m for m in medicines if not m["only_when_needed"]]
-    if not regular or any(not m.get("times_of_day") for m in regular):
-        return []
+    if not regular or any(not m.get("times_of_day") or m.get("times_per_week") for m in regular):
+        return []  # a weekly medicine in a "each day" schedule would read as daily
 
     slots: dict[str, list[str]] = {t: [] for t in _TIME_ORDER}
     as_needed: list[str] = []

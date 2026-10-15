@@ -1,6 +1,6 @@
-# AMD Full stack — Prescription Explainer and Translator dashboard
+# AMD Full stack — ClearCare dashboard
 
-A small web app to see what the [prescription explainer](..) does and
+A small web app to see what [ClearCare](..) does and
 how well it does it.
 
 - **Overview**: accuracy per field, checks by area, privacy leaks, unsupported numbers,

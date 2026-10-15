@@ -144,7 +144,51 @@ pre.review { color: var(--text-secondary); }
   border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.15);
 }
 
+/* Try it: the pipeline, step by step */
+.step h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.step .num {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--series-1); color: #fff; font-size: 12px; font-weight: 700;
+}
+.step .where { font-weight: 400; font-size: 12px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
+.stream { display: grid; gap: 8px; }
+.stream .block {
+  background: var(--surface-0); border: 1px solid var(--border); border-left: 3px solid var(--good);
+  border-radius: 6px; padding: 8px 10px; font: 13px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap;
+  animation: drop .35s ease-out;
+}
+.stream .block .t { float: right; color: var(--text-muted); font-family: -apple-system, sans-serif; font-size: 12px; }
+.stream .block.unsure { border-left-color: var(--warning); }
+@keyframes drop { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .stream .block { animation: none; } }
+pre.arabic { font-family: "Geeza Pro", "Noto Naskh Arabic", "Segoe UI", sans-serif; font-size: 16px; line-height: 1.9; text-align: right; }
+pre.arabic[dir="ltr"] { text-align: left; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.5; }
+button.chip[aria-pressed="true"] { background: var(--series-1); color: #fff; border-color: var(--series-1); }
+.report { margin-top: 10px; font-size: 13px; display: grid; gap: 4px; }
+.report .warn { color: var(--critical-text); }
+.criteria { display: grid; gap: 10px; margin-top: 10px; }
+.crit { display: grid; grid-template-columns: 150px 70px 1fr; gap: 10px; font-size: 13px; align-items: start; }
+.crit .name { color: var(--text-secondary); }
+.crit .score { font-weight: 650; font-variant-numeric: tabular-nums; }
+.crit .score.low { color: var(--critical-text); }
+.crit q { color: var(--text-muted); }
+.stars { font-size: 22px; letter-spacing: 2px; color: var(--warning); }
+
+/* Judge: each result explained */
+.explained { display: grid; gap: 10px; }
+.explain { border: 1px solid var(--border); border-left: 4px solid var(--good); border-radius: 8px; padding: 10px 12px; background: var(--surface-0); font-size: 13px; }
+.explain.bad { border-left-color: var(--critical); }
+.explain h3 { margin: 0 0 6px; font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.explain dl { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; margin: 0; }
+.explain dt { color: var(--text-secondary); }
+.explain dd { margin: 0; }
+.explain ul { margin: 2px 0 0; padding-left: 18px; }
+.explain .because { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
 @media (max-width: 760px) {
+  .explain dl { grid-template-columns: 1fr; }
+  .crit { grid-template-columns: 1fr auto; }
+  .crit .why { grid-column: 1 / -1; }
   .grid2, .detail-grid { grid-template-columns: 1fr; }
   main { padding: 16px; }
   .top, .tabs { padding-left: 16px; padding-right: 16px; }

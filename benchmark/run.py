@@ -153,7 +153,7 @@ def run_case(case: dict) -> dict:
         "id": case["id"], "category": case.get("category", ""), "input": case["input"],
         "sent_to_ai": sent_to_ai, "privacy_removed": removed,
         "checks": [], "error": None, "output": "", "review": [], "structured": None,
-        "time_to_dosing": None, "time_total": None,
+        "time_to_first": None, "time_to_dosing": None, "time_total": None,
     }
     checks = result["checks"]
 
@@ -164,7 +164,9 @@ def run_case(case: dict) -> dict:
     done = None
     try:
         for event in pipeline.stream_prescription(case["input"]):
-            if event["type"] == "dosing":
+            if event["type"] == "medicine_ready" and result["time_to_first"] is None:
+                result["time_to_first"] = round(time.monotonic() - start, 2)  # first checked medicine on screen
+            elif event["type"] == "dosing":
                 result["time_to_dosing"] = round(time.monotonic() - start, 2)
             elif event["type"] == "done":
                 done = event
@@ -263,6 +265,7 @@ def summarize(results: list[dict]) -> dict:
 
     timed = [r for r in results if r["time_to_dosing"] is not None]
     dosing = [r["time_to_dosing"] for r in timed]
+    first = [r["time_to_first"] for r in results if r.get("time_to_first") is not None]
     totals = [r["time_total"] for r in timed]
     grades = [r["reading_grade"] for r in results if r.get("reading_grade") is not None]
     words = [len(r["output"].split()) for r in results if r["output"]]
@@ -288,6 +291,7 @@ def summarize(results: list[dict]) -> dict:
             "missed": sum(not c["ok"] and c["expected"] is True for c in review),
             "needless": sum(not c["ok"] and c["expected"] is False for c in review),
         },
+        "time_to_first_s": stats(first),
         "time_to_dosing_s": stats(dosing),
         "time_total_s": stats(totals),
         "reading_grade": {"mean": round(statistics.mean(grades), 1), "max": max(grades)} if grades else None,
@@ -305,7 +309,8 @@ def run_benchmark(cases: list[dict], cold: bool = False,
         pipeline._fetch_drug_purpose = lambda med: None
     # Every finished case is appended to a progress file, so a stopped run can continue later
     # (same test set, provider and model) instead of starting again.
-    progress_file = RESULTS_DIR / f".progress_{Path(dataset).stem}_{pipeline.LLM_PROVIDER}{'_cold' if cold else ''}.jsonl"
+    model_tag = re.sub(r"[^A-Za-z0-9.]+", "-", pipeline.LLM_MODEL.split("/")[-1])[:40]
+    progress_file = RESULTS_DIR / f".progress_{Path(dataset).stem}_{pipeline.LLM_PROVIDER}_{model_tag}{'_cold' if cold else ''}.jsonl"
     done: dict[str, dict] = {}
     started = datetime.now()
     if progress_file.is_file():
@@ -341,7 +346,8 @@ def run_benchmark(cases: list[dict], cold: bool = False,
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     tag = Path(dataset).stem
-    path = RESULTS_DIR / f"{started:%Y%m%d_%H%M%S}_{pipeline.LLM_PROVIDER}_{tag}{'_cold' if cold else ''}.json"
+    model_part = "" if pipeline.LLM_PROVIDER == "ollama" else f"_{model_tag}"
+    path = RESULTS_DIR / f"{started:%Y%m%d_%H%M%S}_{pipeline.LLM_PROVIDER}{model_part}_{tag}{'_cold' if cold else ''}.json"
     path.write_text(json.dumps(report, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     progress_file.unlink(missing_ok=True)  # complete: the saved report replaces the progress file
     report["meta"]["file"] = path.name
@@ -360,7 +366,7 @@ def datasets() -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Measure the prescription explainer on labelled cases.")
+    parser = argparse.ArgumentParser(description="Measure ClearCare on labelled cases.")
     parser.add_argument("-p", "--provider", choices=sorted(pipeline._PROVIDERS))
     parser.add_argument("-m", "--model")
     parser.add_argument("--limit", type=int, help="only run the first N cases")
@@ -399,6 +405,8 @@ def main() -> None:
     print(f"Unsupported numbers:  {s['unsupported_numbers']}")
     print(f"Review flag:          missed {s['review_flag']['missed']}, needless {s['review_flag']['needless']}")
     if s["time_to_dosing_s"]:
+        if s.get("time_to_first_s"):
+            print(f"First medicine shown: median {s['time_to_first_s']['median']}s")
         print(f"Time to dosing:       median {s['time_to_dosing_s']['median']}s · total median {s['time_total_s']['median']}s")
     if s["reading_grade"]:
         print(f"Reading level:        grade {s['reading_grade']['mean']} (school years)")

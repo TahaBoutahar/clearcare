@@ -11,3 +11,9 @@ data/PxCorpus*
 # Demo app: kept on this computer only, never pushed
 demo-app/
 benchmark/results/.progress_*
+
+# Translation cache (rebuilt automatically)
+translation-pipeline/data/darija_cache.json
+
+# Old test results, kept on this computer only
+archive/
