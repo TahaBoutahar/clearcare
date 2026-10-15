@@ -1,17 +1,32 @@
 # ClearCare
 
-**Prescription explainer and translator**
+### Your prescription, explained in your language.
 
-AMD Developer Hackathon ACT III — Health and Wellbeing track.
+*AMD Developer Hackathon ACT III · Health and Wellbeing track*
 
-Turns a doctor's prescription (text or voice, often in French) into a short, plain explanation for
-patients who may not read well, in **English and 9 other languages** (Moroccan Darija, Modern Standard
-Arabic, French, Spanish, Portuguese, Italian, German, Dutch, Turkish). It **only restates the
-prescription**: no diagnosis, no medical advice. A doctor reviews and approves every explanation
-before the patient gets it.
+Many patients leave the doctor's office with a prescription they cannot really read: shorthand like
+`1 cp x 2/j`, Latin abbreviations, a language they do not speak, or simply not reading well. Taking the
+wrong amount, at the wrong time, or for too long can hurt them.
 
-Runs on **AMD Developer Cloud**: `DeepSeek-V4-Flash` reads the prescription and translates,
-`MiMo-V2.6-Flash` (a different model) checks the result.
+**ClearCare** turns the prescription, typed or dictated, into a short, plain sheet: what each medicine
+is for, how much to take, when, with or without food, and for how long. In **English and 9 other
+languages**: Moroccan Darija (also in Latin letters), Modern Standard Arabic, French, Spanish,
+Portuguese, Italian, German, Dutch and Turkish.
+
+- **It only restates the prescription.** No diagnosis, no medical advice.
+- **The AI never re-words a dose.** Dose sentences come from fixed templates, and every number is
+  checked against the prescription.
+- **It says when it is not sure**, and why, instead of guessing.
+- **A doctor approves every sheet** before the patient gets it.
+- **Private by design.** Names, phone numbers and ID numbers are removed on the device, before
+  anything reaches the AI.
+
+Built on **AMD Developer Cloud**: `DeepSeek-V4-Flash` reads and translates, and a second model,
+`MiMo-V2.6-Flash`, double-checks every result.
+
+| 210 / 211 | 0 | 6.4 s | 90 % | 10 |
+|:---:|:---:|:---:|:---:|:---:|
+| benchmark checks passed | privacy leaks | until the first medicine is on screen | planted mistakes caught by the second model | languages |
 
 ![Each medicine appears as soon as it is read and checked](docs/screenshots/try-streaming.png)
 
