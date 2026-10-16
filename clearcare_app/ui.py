@@ -337,15 +337,15 @@ def delivery_dialog(store, version_id):
         st.download_button("Download written explanation", v["text"].encode("utf-8"),
                            file_name="explanation.txt", mime="text/plain; charset=utf-8", on_click="ignore")
     with audio_tab:
-        if v["language"] == "ary":
-            st.caption("Darija text, Arabic voice. Preview the pronunciation before giving it to the patient.")
         audio = store.artifact(version_id, "audio")
         if audio:
             st.audio(audio, format="audio/mpeg")
             st.download_button("Download audio", audio, file_name="explanation.mp3", mime="audio/mpeg", on_click="ignore")
         else:
             st.caption("Generate speech from the approved explanation.")
-            if st.button("Generate approved audio"):
+            if v["language"] == "ary":
+                st.info("Darija audio from the explanation model is not connected yet.")
+            elif st.button("Generate approved audio"):
                 try:
                     with st.spinner("Generating speech…"):
                         audio = Agent().audio(v["text"], v["language"])
