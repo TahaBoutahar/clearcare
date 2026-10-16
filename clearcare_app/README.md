@@ -65,8 +65,9 @@ clinical sentences starting with “Patient …”. Review the source and output
   becomes a transcript for the doctor to review and copy into the input; transcription
   does not automatically call the explanation model. Temporary recordings are deleted.
 - Audio generation calls the existing gTTS function, with correct language-name mapping.
-  gTTS is an external speech service. **Darija speech is explicitly unavailable** instead
-  of silently using English or Modern Standard Arabic. Written Darija remains available.
+  gTTS is an external speech service. Darija wording is read with the existing Arabic
+  voice, labelled **Darija text, Arabic voice**. This is not a dedicated Moroccan voice;
+  preview pronunciation before delivery. The approved Darija text is not rewritten.
 - Email requires `SMTP_HOST`, `SMTP_FROM`, and optionally `SMTP_USERNAME`/`SMTP_PASSWORD`.
   Port 587 uses STARTTLS; port 465 uses SMTP over TLS. The doctor confirms the recipient.
   The message contains the exact approved text and PDF, with optional approved audio.

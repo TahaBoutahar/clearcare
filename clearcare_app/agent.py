@@ -71,9 +71,9 @@ class Agent:
     def audio(self, text, language):
         # The existing function accepts language NAMES, not the app's language codes.
         names = {"en": "english", "fr": "french", "ar": "arabic", "es": "spanish", "pt": "portuguese",
-                 "it": "italian", "de": "german", "nl": "dutch", "tr": "turkish"}
+                 "it": "italian", "de": "german", "nl": "dutch", "tr": "turkish", "ary": "arabic"}
         if language not in names:
-            raise ValueError("The existing speech service has no Darija voice. Use the written explanation instead.")
+            raise ValueError("Choose a supported speech language.")
         with _LOCK, tempfile.TemporaryDirectory(prefix="clearcare-speech-") as directory:
             pipeline, _, _ = _modules()
             path = pipeline.text_to_audio(text, names[language], str(Path(directory) / "explanation.mp3"))

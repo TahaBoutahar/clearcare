@@ -54,8 +54,10 @@ def test_audio_maps_codes_and_never_silently_uses_english(monkeypatch):
     monkeypatch.setattr(agent, "_modules", lambda: (SimpleNamespace(text_to_audio=speak), None, None))
     assert agent.Agent().audio("Bonjour", "fr") == b"mp3"
     assert calls == [("Bonjour", "french")]
+    assert agent.Agent().audio("نص بالدارجة", "ary") == b"mp3"
+    assert calls[-1] == ("نص بالدارجة", "arabic")
     with pytest.raises(ValueError):
-        agent.Agent().audio("Darija", "ary")
+        agent.Agent().audio("Unsupported", "unknown")
 
 
 def test_language_metadata_loads_without_agent_credentials():
