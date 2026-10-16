@@ -22,8 +22,10 @@ CSS = """
 h1 {font-size:1.8rem!important; font-weight:600!important;}
 h2 {font-size:1.25rem!important;}
 h3 {font-size:1.05rem!important;}
-[data-testid="stSidebar"] {background:#f1f4f1;}
-.cc-brand {font-size:1.3rem; font-weight:600; color:#203a32; margin-bottom:.5rem;}
+[data-testid="stSidebar"] {background:#f1f4f1; width:240px!important; min-width:240px!important; max-width:240px!important; border-right:1px solid #e2e8e4;}
+.cc-brand {display:flex; align-items:center; gap:.6rem; font-size:1.15rem; font-weight:650; color:#203a32; margin-bottom:.25rem;}
+.cc-mark {display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:#22654e; color:white; font-size:1.2rem;}
+.cc-workspace {font-size:.8rem; color:#68786f; margin:0 0 1.5rem 2.35rem;}
 .cc-reading {white-space:pre-wrap; overflow-wrap:anywhere; background:#fff;
  border:1px solid #dce4de; border-radius:10px; padding:1.3rem; line-height:1.75; color:#203a32;}
 .st-key-consultation_panels [data-testid="stHorizontalBlock"] {flex-wrap:wrap;}
@@ -278,13 +280,16 @@ def consultation_page(store):
             if st.button("Give to patient", type="primary", use_container_width=True):
                 delivery_dialog(store, v["id"])
         elif v["status"] == "draft" and fresh:
+            st.session_state.setdefault("reviewer_input", st.session_state.get("reviewer_name", os.getenv("CLEARCARE_CLINICIAN", "")))
+            reviewer = st.text_input("Reviewing doctor", key="reviewer_input", placeholder="Enter your name to sign the explanation")
+            st.session_state["reviewer_name"] = reviewer
             checked = st.checkbox("I reviewed this exact explanation for accuracy.", key=f"checked_{selected}")
             acknowledged = not v["needs_review"] or st.checkbox("I checked the flagged uncertainties and confirm this wording.",
                                                                key=f"ack_{selected}")
-            if st.button("Approve & give to patient", type="primary", disabled=not checked or not acknowledged,
+            if st.button("Approve & give to patient", type="primary", disabled=not checked or not acknowledged or not reviewer.strip(),
                          use_container_width=True):
                 try:
-                    store.approve(selected, st.session_state["reviewer"], acknowledge=acknowledged)
+                    store.approve(selected, reviewer, acknowledge=acknowledged)
                 except ValueError as exc:
                     st.error(str(exc))
                 else:
@@ -425,12 +430,10 @@ def main():
         st.stop()
     login()
     with st.sidebar:
-        st.markdown('<div class="cc-brand">ClearCare</div>', unsafe_allow_html=True)
-        st.caption("Patient explanations, checked by you")
-        st.text_input("Reviewing doctor", value=os.getenv("CLEARCARE_CLINICIAN", "Doctor"), key="reviewer")
-        if st.button("Patients", use_container_width=True):
+        st.markdown('<div class="cc-brand"><span class="cc-mark" aria-hidden="true">+</span>ClearCare</div>'
+                    '<div class="cc-workspace">Clinician workspace</div>', unsafe_allow_html=True)
+        if st.button("Patients", use_container_width=True, type="primary"):
             go("patients")
-        st.caption("Patient records and outputs are stored on this server.")
         if os.getenv("CLEARCARE_APP_PASSWORD") and st.button("Sign out"):
             st.session_state.clear()
             st.rerun()

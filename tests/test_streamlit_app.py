@@ -38,6 +38,7 @@ def test_patient_consultation_generation_approval_and_history(app_env, monkeypat
     monkeypatch.setattr(Agent, "generate", generate)
     app = AppTest.from_file(str(ROOT / "streamlit_app.py"), default_timeout=20).run()
     assert not app.exception
+    assert not app.sidebar.text_input
     button(app, "Add patient").click().run()
     text(app, "Full name").set_value("Sam Taylor")
     app.date_input[0].set_value(date(1985, 5, 12))
@@ -62,6 +63,8 @@ def test_patient_consultation_generation_approval_and_history(app_env, monkeypat
     assert len(calls) == 1
     next(c for c in app.checkbox if c.label.startswith("I reviewed this exact")).check().run()
     next(c for c in app.checkbox if c.label.startswith("I checked the flagged")).check().run()
+    assert button(app, "Approve & give to patient").disabled
+    text(app, "Reviewing doctor").set_value("Dr Morgan").run()
     button(app, "Approve & give to patient").click().run()
     assert not app.exception
     store = Store(app_env / "clearcare.sqlite3")

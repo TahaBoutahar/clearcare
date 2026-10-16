@@ -28,7 +28,7 @@ After installation, subsequent starts can skip dependency installation:
 .venv/bin/python -m streamlit run streamlit_app.py
 ```
 
-Set `CLEARCARE_CLINICIAN` to the reviewing doctor's name. Optional app/email settings
+Set `CLEARCARE_CLINICIAN` to prefill the reviewing doctor's name at the approval step. Optional app/email settings
 are documented in `.env.streamlit.example`; add those settings to the root `.env`.
 Never commit a populated `.env` or patient database.
 
