@@ -107,3 +107,29 @@ def test_password_gate_precedes_patient_records(app_env, monkeypatch):
     text(app, "Workspace password").set_value("test-workspace-password")
     button(app, "Sign in").click().run()
     assert any(b.label == "Add patient" for b in app.button)
+
+
+def test_darija_audio_uses_exact_approved_version(app_env, monkeypatch):
+    store = Store(app_env / "clearcare.sqlite3")
+    pid = store.save_patient("Demo", "1990-01-01", "", "ary")
+    cid = store.new_consultation(pid)
+    wording = "هاد غير مثال باش نجربو الصوت."
+    vid = store.add_version(cid, 0, "ary", wording, {}, {})
+    store.approve(vid, "Demo reviewer")
+    calls = []
+    def audio(self, text, language):
+        calls.append((text, language))
+        return b"test-mp3"
+    monkeypatch.setattr(Agent, "audio", audio)
+    app = AppTest.from_file(str(ROOT / "streamlit_app.py"), default_timeout=20)
+    app.session_state["view"] = "consultation"
+    app.session_state["consultation_id"] = cid
+    app.run()
+    button(app, "Give to patient").click().run()
+    assert any("Arabic speech voice" in c.value for c in app.caption)
+    # AppTest submits dialogs via a full-script rerun, so preserve the opener.
+    button(app, "Give to patient").click()
+    button(app, "Generate approved audio").click().run()
+    assert not app.exception
+    assert calls == [(wording, "ary")]
+    assert store.artifact(vid, "audio") == b"test-mp3"

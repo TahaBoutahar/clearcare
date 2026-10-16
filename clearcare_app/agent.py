@@ -69,11 +69,9 @@ class Agent:
             return pipeline.transcribe_voice(str(audio))
 
     def audio(self, text, language):
-        if language == "ary":
-            raise ValueError("Darija audio from the explanation model is not connected yet.")
         # The existing function accepts language NAMES, not the app's language codes.
         names = {"en": "english", "fr": "french", "ar": "arabic", "es": "spanish", "pt": "portuguese",
-                 "it": "italian", "de": "german", "nl": "dutch", "tr": "turkish"}
+                 "it": "italian", "de": "german", "nl": "dutch", "tr": "turkish", "ary": "arabic"}
         if language not in names:
             raise ValueError("Choose a supported speech language.")
         with _LOCK, tempfile.TemporaryDirectory(prefix="clearcare-speech-") as directory:
