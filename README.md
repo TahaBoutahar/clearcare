@@ -117,6 +117,20 @@ cd translation-pipeline
 Dashboard: `AMD Full stack/run.sh`, then http://localhost:8000 (benchmark results, live runs,
 "Try it" step by step with translation and judge, and every judge result explained).
 
+## Patient and consultation app (Streamlit)
+
+A separate Streamlit workspace adds **Patients → Patient history → Consultation** around
+this existing agent, with SQLite records, versioned doctor approval, PDF/text export,
+optional email and audio. No FastAPI service is required, and the AI pipeline is unchanged.
+
+```bash
+./run_streamlit.sh  # local workspace on http://127.0.0.1:8501
+```
+
+Configure the existing provider in `.env`. See [app setup and workflow](clearcare_app/README.md)
+for language support, optional SMTP/patient links, storage, deployment boundaries and tests.
+The benchmark dashboard remains available separately.
+
 ## Measuring it
 
 ```bash
