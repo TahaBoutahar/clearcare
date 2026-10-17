@@ -168,6 +168,22 @@ def patient_page(store):
                 go("consultation", patient["id"], c["id"])
 
 
+# Languages the doctor can dictate in ("" = let Whisper guess). Darija is transcribed as Arabic.
+DICTATION_LANGUAGES = {"fr": "Français", "en": "English", "ar": "العربية / الدارجة", "": "Detect automatically"}
+
+
+def add_transcript(store, key):
+    """Append the reviewed transcript to the doctor's input and save it (runs before the page redraws)."""
+    title_key, source_key = input_keys(key)
+    transcript = st.session_state.get(f"transcript_{key}", "").strip()
+    if not transcript:
+        return
+    current = st.session_state.get(source_key, "").rstrip()
+    st.session_state[source_key] = f"{current}\n{transcript}" if current else transcript
+    st.session_state[f"transcript_{key}"] = ""
+    save_input(store, key)
+
+
 def input_keys(key):
     return f"title_{key}", f"notes_{key}"
 
@@ -236,17 +252,22 @@ def consultation_page(store):
                      placeholder="Enter the doctor's clinical notes…", on_change=save_input, args=(store, c["id"]))
         st.caption("Input saves when you finish an edit. The existing agent decides what it can explain.")
         with st.expander("Dictate a note"):
+            spoken = st.selectbox("Language you speak", list(DICTATION_LANGUAGES), format_func=DICTATION_LANGUAGES.get,
+                                  key=f"spoken_{c['id']}",
+                                  help="Choose it: guessing the language often fails on short dictations.")
             recording = st.audio_input("Record the doctor's note", key=f"record_{c['id']}")
             if st.button("Transcribe recording", disabled=recording is None):
                 try:
                     with st.spinner("Transcribing…"):
-                        transcript = Agent().transcribe(recording.getvalue())
+                        transcript = Agent().transcribe(recording.getvalue(), spoken or None)
                     st.session_state[f"transcript_{c['id']}"] = transcript
+                except AgentError as exc:
+                    st.error(str(exc))
                 except Exception:
                     st.error("Transcription failed. Check that faster-whisper is installed, or type the note instead.")
-            transcript = st.session_state.get(f"transcript_{c['id']}")
-            if transcript:
-                st.text_area("Transcript to review and copy into the doctor’s input", value=transcript, height=150)
+            if st.session_state.get(f"transcript_{c['id']}"):
+                st.text_area("Transcript: check it, correct it, then add it", key=f"transcript_{c['id']}", height=150)
+                st.button("Add to the doctor’s input", type="primary", on_click=add_transcript, args=(store, c["id"]))
         codes = list(languages())
         language = st.selectbox("Patient language", codes, index=codes.index(p["language"]),
                                 format_func=language_label, key=f"language_{c['id']}")

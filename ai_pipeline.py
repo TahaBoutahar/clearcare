@@ -298,20 +298,41 @@ def _pick_client(kwargs: dict):
 # Step 1 — Speech to text
 # --------------------------------------------------------------------------- #
 
-def transcribe_voice(audio_file_path: str) -> str:
+def _read_audio(path: Path):
+    """The recording as 16 kHz mono float32 samples, the format Whisper expects."""
+    import av
+    import numpy as np
+
+    with av.open(str(path)) as container:
+        resampler = av.AudioResampler(format="s16", layout="mono", rate=16000)
+        chunks = []
+        for frame in container.decode(audio=0):
+            for out in resampler.resample(frame):
+                chunks.append(out.to_ndarray().reshape(-1))
+        for out in resampler.resample(None):  # flush
+            chunks.append(out.to_ndarray().reshape(-1))
+    if not chunks:
+        raise PipelineError("No speech detected in the audio file.")
+    return np.concatenate(chunks).astype(np.float32) / 32768.0
+
+
+def transcribe_voice(audio_file_path: str, language: str | None = None) -> str:
     """Transcribe an audio file (wav/mp3/m4a/ogg/...) to text with faster-whisper.
 
-    Language is auto-detected, so doctors can dictate in French, Arabic, English, etc.
+    `language` ("fr", "en", "ar", ...) is the language the doctor speaks; None = auto-detect, which
+    often guesses wrong on short dictations, so give it when you know it.
     """
     path = Path(audio_file_path)
     if not path.is_file():
         raise PipelineError(f"Audio file not found: {audio_file_path}")
 
-    segments, _info = _get_whisper_model().transcribe(
-        str(path),
-        beam_size=5,
-        vad_filter=True,  # drop silences / background noise
-    )
+    options = dict(beam_size=5, vad_filter=True, language=language or None)  # vad: drop silences / noise
+    try:
+        segments, _info = _get_whisper_model().transcribe(str(path), **options)
+    except TypeError:
+        # Newer versions of the audio library (av) no longer accept an option faster-whisper passes when it
+        # opens the file; read the audio here instead and give Whisper the samples.
+        segments, _info = _get_whisper_model().transcribe(_read_audio(path), **options)
     text = " ".join(segment.text.strip() for segment in segments)
     text = re.sub(r"\s+", " ", text).strip()
     if not text:

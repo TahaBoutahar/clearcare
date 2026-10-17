@@ -72,12 +72,16 @@ class Agent:
             needs_review = needs_review or not rating["passed"]
             return {"text": text, "structured": done["prescription"], "report": report, "needs_review": needs_review}
 
-    def transcribe(self, data: bytes):
+    def transcribe(self, data: bytes, language: str | None = None):
+        """language: the language the doctor speaks ("fr", "en", "ar"), or None to let Whisper guess."""
         with _LOCK, tempfile.TemporaryDirectory(prefix="clearcare-recording-") as directory:
             audio = Path(directory) / "recording.wav"
             audio.write_bytes(data)
             pipeline, _, _ = _modules()
-            return pipeline.transcribe_voice(str(audio))
+            try:
+                return pipeline.transcribe_voice(str(audio), language)
+            except getattr(pipeline, "PipelineError", ()) as exc:
+                raise AgentError(str(exc)) from exc
 
     def audio(self, text, language):
         # The existing function accepts language NAMES, not the app's language codes.

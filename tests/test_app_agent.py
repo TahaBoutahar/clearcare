@@ -91,3 +91,13 @@ def test_audio_maps_codes_and_never_silently_uses_english(monkeypatch):
 
 def test_language_metadata_loads_without_agent_credentials():
     assert "ary" in agent.languages() and agent.languages()["ar"]["dir"] == "rtl"
+
+
+def test_transcription_passes_the_spoken_language(monkeypatch):
+    calls = []
+    def transcribe_voice(path, language=None):
+        calls.append((Path(path).read_bytes(), language))
+        return "Amoxicilline 1 g"
+    monkeypatch.setattr(agent, "_modules", lambda: (SimpleNamespace(transcribe_voice=transcribe_voice), None, None))
+    assert agent.Agent().transcribe(b"wav", "fr") == "Amoxicilline 1 g"
+    assert calls == [(b"wav", "fr")]
