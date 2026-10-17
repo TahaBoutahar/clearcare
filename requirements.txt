@@ -1,3 +1,8 @@
 openai>=1.40.0
 faster-whisper>=1.0.3
 gTTS>=2.5.1
+# The doctors' app (Streamlit); listed here because Streamlit Community Cloud installs this file
+streamlit>=1.45,<2
+python-dotenv>=1.0,<2
+fpdf2>=2.8.3,<3
+uharfbuzz>=0.39

@@ -1,5 +1,5 @@
 [server]
-address = "127.0.0.1"
+# run_streamlit.sh keeps it on this computer (127.0.0.1); a host such as Streamlit Cloud sets its own address.
 maxUploadSize = 20
 
 [browser]

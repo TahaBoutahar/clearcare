@@ -460,8 +460,19 @@ def patient_view(store, token):
     st.caption("For questions about your condition or treatment, contact your doctor or pharmacist.")
 
 
+def _secrets_to_environment():
+    """On a host such as Streamlit Cloud, settings and keys come as secrets: give them to the agent too."""
+    try:
+        for key, value in st.secrets.items():
+            if isinstance(value, (str, int, float, bool)):
+                os.environ.setdefault(key, str(value))
+    except Exception:  # no secrets file: running locally with .env
+        pass
+
+
 def main():
     load_dotenv(ROOT / ".env", override=False)
+    _secrets_to_environment()
     st.set_page_config(page_title="ClearCare", page_icon="📋", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
     store = get_store()
