@@ -92,8 +92,9 @@ def test_share_view_does_not_render_clinician_navigation(app_env):
     app.run()
     assert not app.exception
     assert not app.text_input and not app.sidebar.button
-    assert "Only this approved explanation" in " ".join(m.value for m in app.markdown)
-    assert "Private Patient" not in " ".join(m.value for m in app.markdown)
+    shown = " ".join([m.value for m in app.markdown] + [h.proto.body for h in app.get("html")])
+    assert "Only this approved explanation" in shown
+    assert "Private Patient" not in shown
 
 
 def test_password_gate_precedes_patient_records(app_env, monkeypatch):

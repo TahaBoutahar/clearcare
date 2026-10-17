@@ -37,7 +37,11 @@ h3 {font-size:1.05rem!important;}
 
 def reading(text, language="en"):
     direction = languages().get(language, {}).get("dir", "ltr")
-    st.markdown(f'<div class="cc-reading" dir="{direction}">{html.escape(text)}</div>', unsafe_allow_html=True)
+    # One block per line (Markdown would read "1. Amoxicilline" as a list and split the box at blank lines),
+    # each isolated so a line mixing Arabic and a Latin medicine name keeps the sheet's direction.
+    lines = "".join(f'<div dir="{direction}" style="unicode-bidi:isolate">{html.escape(line) or "&nbsp;"}</div>'
+                    for line in text.splitlines())
+    st.html(f'<div class="cc-reading" dir="{direction}">{lines}</div>')
 
 
 def language_label(code):

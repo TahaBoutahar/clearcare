@@ -28,7 +28,7 @@ Built on **AMD Developer Cloud**: `DeepSeek-V4-Flash` reads and translates, and 
 |:---:|:---:|:---:|:---:|:---:|
 | benchmark checks passed | privacy leaks | until the first medicine is on screen | planted mistakes caught by the second model | languages |
 
-![Each medicine appears as soon as it is read and checked](docs/screenshots/try-streaming.png)
+![The ClearCare app: the doctor's notes on the left, the patient's sheet in Moroccan Darija on the right](docs/screenshots/app-consultation.png)
 
 ## How it works
 
@@ -40,6 +40,8 @@ Built on **AMD Developer Cloud**: `DeepSeek-V4-Flash` reads and translates, and 
    medicine the amount, times of day, food, duration, "only when needed", maximum per day. The answer
    is streamed: each medicine is shown as soon as the AI has written it **and** it has passed every
    check, so the first one is on screen in about 6 seconds.
+
+   ![Each medicine appears as soon as it is read and checked](docs/screenshots/try-streaming.png)
 3. **Checks against the original text** (code, not AI): every number must be on the prescription,
    tablet/capsule as written, food rules and follow-up visits must be written, missed details are
    re-read from the medicine's own line, a medicine name that is not on the prescription is never
@@ -117,11 +119,20 @@ cd translation-pipeline
 Dashboard: `AMD Full stack/run.sh`, then http://localhost:8000 (benchmark results, live runs,
 "Try it" step by step with translation and judge, and every judge result explained).
 
-## Patient and consultation app (Streamlit)
+## The app for doctors (Streamlit)
 
-A separate Streamlit workspace adds **Patients → Patient history → Consultation** around
-this existing agent, with SQLite records, versioned doctor approval, PDF/text export,
-optional email and audio. No FastAPI service is required, and the AI pipeline is unchanged.
+The doctor's workspace: **Patients → Patient history → Consultation**. Every explanation is saved as a
+version; only an approved version that matches the current notes can be given to the patient, as a PDF,
+an email, an audio file or a patient link that expires after 7 days. Records stay in a local database.
+
+| Patients | Patient history |
+|---|---|
+| ![Patients](docs/screenshots/app-patients.png) | ![Patient history](docs/screenshots/app-history.png) |
+
+**Dictation:** the doctor records the note, picks the language they speak, checks the transcript and adds
+it to the notes in one click.
+
+![Dictating a note](docs/screenshots/app-dictation.png)
 
 ```bash
 ./run_streamlit.sh  # local workspace on http://127.0.0.1:8501

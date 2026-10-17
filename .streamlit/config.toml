@@ -5,6 +5,9 @@ maxUploadSize = 20
 [browser]
 gatherUsageStats = false
 
+[client]
+toolbarMode = "viewer"  # no developer menu ("Deploy") for doctors
+
 [theme]
 base = "light"
 primaryColor = "#22654e"
