@@ -11,7 +11,7 @@ from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
-from .agent import Agent, ROOT, languages
+from .agent import Agent, AgentError, ROOT, languages
 from .outputs import patient_url, pdf_bytes, send_email
 from .store import Conflict, Store
 
@@ -63,12 +63,26 @@ def get_store():
     return Store(data / "clearcare.sqlite3")
 
 
+# A request that came through a proxy or tunnel (e.g. a public HTTPS link) carries one of these headers,
+# even though the app itself listens on 127.0.0.1.
+_PROXY_HEADERS = ("x-forwarded-for", "x-forwarded-host", "x-real-ip", "forwarded", "cf-connecting-ip")
+
+
+def _reached_from_outside() -> bool:
+    try:
+        headers = {k.lower() for k in st.context.headers.keys()}
+    except Exception:
+        return False
+    return any(h in headers for h in _PROXY_HEADERS)
+
+
 def login():
     password = os.getenv("CLEARCARE_APP_PASSWORD", "")
     address = st.get_option("server.address") or "0.0.0.0"
     if not password:
-        if address not in ("127.0.0.1", "localhost", "::1"):
-            st.error("Set CLEARCARE_APP_PASSWORD before exposing the doctor workspace, or bind to 127.0.0.1.")
+        if address not in ("127.0.0.1", "localhost", "::1") or _reached_from_outside():
+            st.error("Set CLEARCARE_APP_PASSWORD before exposing the doctor workspace (a public link or tunnel "
+                     "reaches it from outside this computer), or use it only on this computer.")
             st.stop()
         return
     password_tag = hashlib.sha256(password.encode()).hexdigest()
@@ -254,6 +268,8 @@ def consultation_page(store):
                 with st.spinner("Reading and checking the doctor's input…"):
                     result = Agent().generate(draft["source"], language, on_event=on_event)
                     store.add_version(c["id"], draft["revision"], language, **result)
+            except AgentError as exc:  # the agent's own "Sorry, ... Why: ..." message
+                st.error(f"{exc} Your input is saved.")
             except Exception:
                 st.error("The explanation could not be completed. Your input is saved. Check the model configuration and retry.")
             else:

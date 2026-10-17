@@ -14,12 +14,41 @@ def test_generation_uses_existing_stream_without_changing_provider(monkeypatch):
         calls.append(source)
         yield {"type": "dosing", "prescription": {}}
         yield done
-    monkeypatch.setattr(agent, "_modules", lambda: (SimpleNamespace(stream_prescription=stream), None, None))
+    judged = []
+    def rate(*args):
+        judged.append(args)
+        return {"passed": True, "score": 5}
+    translation = SimpleNamespace(keep_medical_only=lambda source: ("clean source", []))
+    monkeypatch.setattr(agent, "_modules", lambda: (SimpleNamespace(stream_prescription=stream), translation,
+                                                     SimpleNamespace(rate=rate)))
     events = []
     result = agent.Agent().generate("Doctor source", on_event=events.append)
     assert calls == ["Doctor source"]
     assert result["text"] == done["text"] and result["structured"] == done["prescription"]
     assert len(events) == 2
+    # The second model also checks English sheets.
+    assert judged == [("clean source", "Original output")] and result["report"]["rating"]["score"] == 5
+
+
+def test_english_sheet_failing_the_second_model_needs_review(monkeypatch):
+    done = {"type": "done", "text": "English output", "review": [], "prescription": {}, "needs_review": False}
+    monkeypatch.setattr(agent, "_modules", lambda: (
+        SimpleNamespace(stream_prescription=lambda s: iter([done])),
+        SimpleNamespace(keep_medical_only=lambda source: ("clean", [])),
+        SimpleNamespace(rate=lambda *a: {"passed": False, "score": 2})))
+    assert agent.Agent().generate("source")["needs_review"]
+
+
+def test_agent_refusal_keeps_its_reason(monkeypatch):
+    class PipelineError(Exception):
+        pass
+    def stream(source):
+        raise PipelineError("Sorry, I could not understand this prescription. Why: it is a greeting.")
+        yield
+    monkeypatch.setattr(agent, "_modules", lambda: (
+        SimpleNamespace(stream_prescription=stream, PipelineError=PipelineError), None, None))
+    with pytest.raises(agent.AgentError, match="Why: it is a greeting"):
+        agent.Agent().generate("Bonjour")
 
 
 def test_incomplete_stream_is_not_treated_as_saved_output(monkeypatch):

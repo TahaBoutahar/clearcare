@@ -32,6 +32,10 @@ def _modules():
     return cli.pipeline, importlib.import_module("translation_pipeline"), importlib.import_module("judge")
 
 
+class AgentError(RuntimeError):
+    """The agent refused or failed and said why ("Sorry, ... Why: ..."): show this message as it is."""
+
+
 class Agent:
     def generate(self, source, language="en", on_event=None):
         if language not in languages():
@@ -42,23 +46,30 @@ class Agent:
         with _LOCK:
             pipeline, translation, judge = _modules()
             done = None
-            for event in pipeline.stream_prescription(source):
-                if on_event:
-                    on_event(event)
-                if event["type"] == "done":
-                    done = event
+            try:
+                for event in pipeline.stream_prescription(source):
+                    if on_event:
+                        on_event(event)
+                    if event["type"] == "done":
+                        done = event
+            except getattr(pipeline, "PipelineError", ()) as exc:
+                raise AgentError(str(exc)) from exc
             if not done:
                 raise RuntimeError("The agent did not complete. The input is saved; please retry.")
             report = {"review": done["review"], "english": done["text"]}
             text, needs_review = done["text"], done["needs_review"]
+            cleaned, _ = translation.keep_medical_only(source)
             if language != "en":
                 translated = translation.to_language(done["prescription"], language)
-                cleaned, _ = translation.keep_medical_only(source)
                 rating = judge.rate(cleaned, done["text"], translated["text"], translated["language_name"])
                 text = translated["text"]
-                report.update(translation=translated, rating=rating)
+                report.update(translation=translated)
                 needs_review = (needs_review or bool(translated["kept_in_english"])
-                                or not translated["is_right_language"] or not rating["passed"])
+                                or not translated["is_right_language"])
+            else:  # the second model checks every sheet, English included
+                rating = judge.rate(cleaned, done["text"])
+            report["rating"] = rating
+            needs_review = needs_review or not rating["passed"]
             return {"text": text, "structured": done["prescription"], "report": report, "needs_review": needs_review}
 
     def transcribe(self, data: bytes):
